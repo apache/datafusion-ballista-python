@@ -54,18 +54,17 @@ jobs:
           export PATH=$PATH:$HOME/d/protoc/bin
           python -m venv venv
           source venv/bin/activate
-          pip install -r python/requirements.txt
+          pip install -r requirements.txt
       - name: Run Linters
         run: |
           source venv/bin/activate
-          flake8 python --ignore=E501
+          flake8 . --ignore=E501
           black --line-length 79 --diff --check python
       - name: Run tests
         run: |
           export PATH=$PATH:$HOME/d/protoc/bin
           protoc --version
           source venv/bin/activate
-          cd python
           maturin develop
           RUST_BACKTRACE=1 pytest -v .
         env:

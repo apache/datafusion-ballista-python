@@ -23,7 +23,7 @@ on:
 
 defaults:
   run:
-    working-directory: ./python
+    working-directory: .
 
 jobs:
   generate-license:
@@ -36,11 +36,11 @@ jobs:
           toolchain: stable
           override: true
       - name: Generate license file
-        run: python ../dev/create_license.py
+        run: python dev/create_license.py
       - uses: actions/upload-artifact@v3
         with:
           name: python-wheel-license
-          path: python/LICENSE.txt
+          path: LICENSE.txt
 
   build-python-mac-win:
     needs: [generate-license]
@@ -68,7 +68,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: python-wheel-license
-          path: python
 
       - name: Build Python package
         run: maturin build --release --no-sdist --strip
@@ -85,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: dist
-          path: python/target/wheels/*
+          path: target/wheels/*
 
   build-manylinux:
     needs: [generate-license]
@@ -98,7 +97,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: python-wheel-license
-          path: python
       - run: cat LICENSE.txt
       - name: Build wheels
         run: |
@@ -112,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: dist
-          path: python/target/wheels/*
+          path: target/wheels/*
 
   # NOTE: PyPI publish needs to be done manually for now after release passed the vote
   # release:

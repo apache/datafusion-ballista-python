@@ -29,4 +29,3 @@ documentation:
   - README.md
   - ./**/README.md
   - DEVELOPERS.md
-  - ballista/docs/**.*
