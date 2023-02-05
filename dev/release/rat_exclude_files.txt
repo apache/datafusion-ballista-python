@@ -35,7 +35,7 @@ requirements.txt
 benchmarks/queries/q*.sql
 ballista/scheduler/testdata/*
 **/yarn.lock
-python/requirements*.txt
+requirements*.txt
 **/testdata/*
 benchmarks/queries/*
 benchmarks/data/*
