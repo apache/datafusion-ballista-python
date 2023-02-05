@@ -126,8 +126,7 @@ impl PyDataFrame {
     fn show(&self, py: Python, num: usize) -> PyResult<()> {
         let df = self.df.as_ref().clone().limit(0, Some(num))?;
         let batches = wait_for_future(py, df.collect())?;
-        pretty::print_batches(&batches)
-            .map_err(|err| PyArrowException::new_err(err.to_string()))
+        pretty::print_batches(&batches).map_err(|err| PyArrowException::new_err(err.to_string()))
     }
 
     fn join(
@@ -168,18 +167,12 @@ impl PyDataFrame {
     fn explain(&self, py: Python, verbose: bool, analyze: bool) -> PyResult<()> {
         let df = self.df.as_ref().clone().explain(verbose, analyze)?;
         let batches = wait_for_future(py, df.collect())?;
-        pretty::print_batches(&batches)
-            .map_err(|err| PyArrowException::new_err(err.to_string()))
+        pretty::print_batches(&batches).map_err(|err| PyArrowException::new_err(err.to_string()))
     }
 
     /// Get the explain output as a string
     #[args(verbose = false, analyze = false)]
-    fn explain_string(
-        &self,
-        py: Python,
-        verbose: bool,
-        analyze: bool,
-    ) -> PyResult<String> {
+    fn explain_string(&self, py: Python, verbose: bool, analyze: bool) -> PyResult<String> {
         let df = self.df.as_ref().clone().explain(verbose, analyze)?;
         let batches = wait_for_future(py, df.collect())?;
         let display = pretty::pretty_format_batches(&batches)

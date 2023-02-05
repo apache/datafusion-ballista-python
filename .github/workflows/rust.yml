@@ -72,29 +72,6 @@ jobs:
             /github/home/target/release/ballista-scheduler
             /github/home/target/release/ballista-executor
 
-  react-build:
-    name: React build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install dependencies
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq install -y nodejs npm
-          npm install -g yarn
-      - name: Run yarn build
-        run: |
-          cd ballista/scheduler/ui
-          pwd
-          yarn install
-          yarn build
-      - name: Save artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: react-artifacts
-          path: |
-            ballista/scheduler/ui/build
-
   # test the crate
   linux-test:
     name: Test Workspace on AMD64 Rust ${{ matrix.rust }}
@@ -279,7 +256,7 @@ jobs:
 
   docker:
     name: Docker
-    needs: [linux-build-lib, react-build]
+    needs: linux-build-lib
     runs-on: ubuntu-latest
     permissions:
       contents: read
