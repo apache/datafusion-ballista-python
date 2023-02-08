@@ -35,7 +35,7 @@ default = ["mimalloc"]
 
 [dependencies]
 async-trait = "0.1"
-ballista = { git = "https://github.com/apache/arrow-ballista" }
+ballista = { git = "https://github.com/apache/arrow-ballista", rev = "8f8154f4907ad87c4d6bd130ea02143a22545ce0" }
 datafusion = { version = "17.0.0", features = ["pyarrow"] }
 datafusion-common = "17.0.0"
 datafusion-expr = "17.0.0"

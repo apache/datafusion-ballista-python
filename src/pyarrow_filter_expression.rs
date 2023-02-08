@@ -45,18 +45,14 @@ fn operator_to_py<'py>(
         Operator::Or => op.getattr("or_")?,
         _ => {
             return Err(DataFusionError::Common(format!(
-                "Unsupported operator {:?}",
-                operator
+                "Unsupported operator {operator:?}"
             )))
         }
     };
     Ok(py_op)
 }
 
-fn extract_scalar_list(
-    exprs: &[Expr],
-    py: Python,
-) -> Result<Vec<PyObject>, DataFusionError> {
+fn extract_scalar_list(exprs: &[Expr], py: Python) -> Result<Vec<PyObject>, DataFusionError> {
     let ret: Result<Vec<PyObject>, DataFusionError> = exprs
         .iter()
         .map(|expr| match expr {
@@ -74,13 +70,11 @@ fn extract_scalar_list(
                 ScalarValue::Float64(Some(f)) => Ok(f.into_py(py)),
                 ScalarValue::Utf8(Some(s)) => Ok(s.into_py(py)),
                 _ => Err(DataFusionError::Common(format!(
-                    "PyArrow can't handle ScalarValue: {:?}",
-                    v
+                    "PyArrow can't handle ScalarValue: {v:?}"
                 ))),
             },
             _ => Err(DataFusionError::Common(format!(
-                "Only a list of Literals are supported got {:?}",
-                expr
+                "Only a list of Literals are supported got {expr:?}"
             ))),
         })
         .collect();
@@ -105,49 +99,22 @@ impl TryFrom<&Expr> for PyArrowFilterExpression {
             let pc = Python::import(py, "pyarrow.compute")?;
             let op_module = Python::import(py, "operator")?;
             let pc_expr: Result<&PyAny, DataFusionError> = match expr {
-                Expr::Column(Column { name, .. }) => {
-                    Ok(pc.getattr("field")?.call1((name,))?)
-                }
+                Expr::Column(Column { name, .. }) => Ok(pc.getattr("field")?.call1((name,))?),
                 Expr::Literal(v) => match v {
-                    ScalarValue::Boolean(Some(b)) => {
-                        Ok(pc.getattr("scalar")?.call1((*b,))?)
-                    }
-                    ScalarValue::Int8(Some(i)) => {
-                        Ok(pc.getattr("scalar")?.call1((*i,))?)
-                    }
-                    ScalarValue::Int16(Some(i)) => {
-                        Ok(pc.getattr("scalar")?.call1((*i,))?)
-                    }
-                    ScalarValue::Int32(Some(i)) => {
-                        Ok(pc.getattr("scalar")?.call1((*i,))?)
-                    }
-                    ScalarValue::Int64(Some(i)) => {
-                        Ok(pc.getattr("scalar")?.call1((*i,))?)
-                    }
-                    ScalarValue::UInt8(Some(i)) => {
-                        Ok(pc.getattr("scalar")?.call1((*i,))?)
-                    }
-                    ScalarValue::UInt16(Some(i)) => {
-                        Ok(pc.getattr("scalar")?.call1((*i,))?)
-                    }
-                    ScalarValue::UInt32(Some(i)) => {
-                        Ok(pc.getattr("scalar")?.call1((*i,))?)
-                    }
-                    ScalarValue::UInt64(Some(i)) => {
-                        Ok(pc.getattr("scalar")?.call1((*i,))?)
-                    }
-                    ScalarValue::Float32(Some(f)) => {
-                        Ok(pc.getattr("scalar")?.call1((*f,))?)
-                    }
-                    ScalarValue::Float64(Some(f)) => {
-                        Ok(pc.getattr("scalar")?.call1((*f,))?)
-                    }
-                    ScalarValue::Utf8(Some(s)) => {
-                        Ok(pc.getattr("scalar")?.call1((s,))?)
-                    }
+                    ScalarValue::Boolean(Some(b)) => Ok(pc.getattr("scalar")?.call1((*b,))?),
+                    ScalarValue::Int8(Some(i)) => Ok(pc.getattr("scalar")?.call1((*i,))?),
+                    ScalarValue::Int16(Some(i)) => Ok(pc.getattr("scalar")?.call1((*i,))?),
+                    ScalarValue::Int32(Some(i)) => Ok(pc.getattr("scalar")?.call1((*i,))?),
+                    ScalarValue::Int64(Some(i)) => Ok(pc.getattr("scalar")?.call1((*i,))?),
+                    ScalarValue::UInt8(Some(i)) => Ok(pc.getattr("scalar")?.call1((*i,))?),
+                    ScalarValue::UInt16(Some(i)) => Ok(pc.getattr("scalar")?.call1((*i,))?),
+                    ScalarValue::UInt32(Some(i)) => Ok(pc.getattr("scalar")?.call1((*i,))?),
+                    ScalarValue::UInt64(Some(i)) => Ok(pc.getattr("scalar")?.call1((*i,))?),
+                    ScalarValue::Float32(Some(f)) => Ok(pc.getattr("scalar")?.call1((*f,))?),
+                    ScalarValue::Float64(Some(f)) => Ok(pc.getattr("scalar")?.call1((*f,))?),
+                    ScalarValue::Utf8(Some(s)) => Ok(pc.getattr("scalar")?.call1((s,))?),
                     _ => Err(DataFusionError::Common(format!(
-                        "PyArrow can't handle ScalarValue: {:?}",
-                        v
+                        "PyArrow can't handle ScalarValue: {v:?}"
                     ))),
                 },
                 Expr::BinaryExpr(BinaryExpr { left, op, right }) => {
@@ -209,8 +176,7 @@ impl TryFrom<&Expr> for PyArrowFilterExpression {
                     Ok(if *negated { invert.call1((ret,))? } else { ret })
                 }
                 _ => Err(DataFusionError::Common(format!(
-                    "Unsupported Datafusion expression {:?}",
-                    expr
+                    "Unsupported Datafusion expression {expr:?}"
                 ))),
             };
             Ok(PyArrowFilterExpression(pc_expr?.into()))

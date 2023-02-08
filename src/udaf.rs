@@ -50,7 +50,7 @@ impl Accumulator for RustAccumulator {
 
     fn evaluate(&self) -> Result<ScalarValue> {
         Python::with_gil(|py| self.accum.as_ref(py).call_method0("evaluate")?.extract())
-            .map_err(|e| DataFusionError::Execution(format!("{}", e)))
+            .map_err(|e| DataFusionError::Execution(format!("{e}")))
     }
 
     fn update_batch(&mut self, values: &[ArrayRef]) -> Result<()> {
@@ -66,7 +66,7 @@ impl Accumulator for RustAccumulator {
             self.accum
                 .as_ref(py)
                 .call_method1("update", py_args)
-                .map_err(|e| DataFusionError::Execution(format!("{}", e)))?;
+                .map_err(|e| DataFusionError::Execution(format!("{e}")))?;
 
             Ok(())
         })
@@ -80,13 +80,13 @@ impl Accumulator for RustAccumulator {
             let state = state
                 .data()
                 .to_pyarrow(py)
-                .map_err(|e| DataFusionError::Execution(format!("{}", e)))?;
+                .map_err(|e| DataFusionError::Execution(format!("{e}")))?;
 
             // 2. call merge
             self.accum
                 .as_ref(py)
                 .call_method1("merge", (state,))
-                .map_err(|e| DataFusionError::Execution(format!("{}", e)))?;
+                .map_err(|e| DataFusionError::Execution(format!("{e}")))?;
 
             Ok(())
         })
@@ -102,7 +102,7 @@ pub fn to_rust_accumulator(accum: PyObject) -> AccumulatorFunctionImplementation
         let accum = Python::with_gil(|py| {
             accum
                 .call0(py)
-                .map_err(|e| DataFusionError::Execution(format!("{}", e)))
+                .map_err(|e| DataFusionError::Execution(format!("{e}")))
         })?;
         Ok(Box::new(RustAccumulator::new(accum)))
     })

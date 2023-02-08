@@ -34,10 +34,10 @@ pub enum DataFusionError {
 impl fmt::Display for DataFusionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            DataFusionError::ExecutionError(e) => write!(f, "DataFusion error: {:?}", e),
-            DataFusionError::ArrowError(e) => write!(f, "Arrow error: {:?}", e),
-            DataFusionError::PythonError(e) => write!(f, "Python error {:?}", e),
-            DataFusionError::Common(e) => write!(f, "{}", e),
+            DataFusionError::ExecutionError(e) => write!(f, "DataFusion error: {e:?}"),
+            DataFusionError::ArrowError(e) => write!(f, "Arrow error: {e:?}"),
+            DataFusionError::PythonError(e) => write!(f, "Python error {e:?}"),
+            DataFusionError::Common(e) => write!(f, "{e}"),
         }
     }
 }
@@ -95,11 +95,11 @@ impl fmt::Display for BallistaError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             BallistaError::DataFusionExecutionError(e) => {
-                write!(f, "DataFusion error: {:?}", e)
+                write!(f, "DataFusion error: {e:?}")
             }
-            BallistaError::ExecutionError(e) => write!(f, "Ballista error: {:?}", e),
-            BallistaError::ArrowError(e) => write!(f, "Arrow error: {:?}", e),
-            BallistaError::Common(e) => write!(f, "{}", e),
+            BallistaError::ExecutionError(e) => write!(f, "Ballista error: {e:?}"),
+            BallistaError::ArrowError(e) => write!(f, "Arrow error: {e:?}"),
+            BallistaError::Common(e) => write!(f, "{e}"),
         }
     }
 }
