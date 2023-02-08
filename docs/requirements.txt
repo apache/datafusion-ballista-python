@@ -15,17 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-python:
-  - python/**/*
-
-development-process:
-  - dev/**.*
-  - .github/**.*
-  - ci/**.*
-  - .asf.yaml
-
-documentation:
-  - docs/**.*
-  - README.md
-  - ./**/README.md
-  - DEVELOPERS.md
+sphinx==2.4.4
+pydata-sphinx-theme
+myst-parser<1
+maturin<0.12

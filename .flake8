@@ -15,17 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-python:
-  - python/**/*
-
-development-process:
-  - dev/**.*
-  - .github/**.*
-  - ci/**.*
-  - .asf.yaml
-
-documentation:
-  - docs/**.*
-  - README.md
-  - ./**/README.md
-  - DEVELOPERS.md
+[flake8]
+exclude =
+    venv
+    dev
+    docs
+    ci
