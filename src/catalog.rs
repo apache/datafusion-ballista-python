@@ -78,8 +78,7 @@ impl PyCatalog {
         match self.catalog.schema(name) {
             Some(database) => Ok(PyDatabase::new(database)),
             None => Err(PyKeyError::new_err(format!(
-                "Database with name {} doesn't exist.",
-                name
+                "Database with name {name} doesn't exist."
             ))),
         }
     }

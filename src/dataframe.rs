@@ -146,8 +146,7 @@ impl PyDataFrame {
             "right_semi" => JoinType::RightSemi,
             how => {
                 return Err(DataFusionError::Common(format!(
-                    "The join type {} does not exist or is not implemented",
-                    how
+                    "The join type {how} does not exist or is not implemented"
                 ))
                 .into())
             }
@@ -184,6 +183,6 @@ impl PyDataFrame {
         let batches = wait_for_future(py, df.collect())?;
         let display = pretty::pretty_format_batches(&batches)
             .map_err(|err| PyArrowException::new_err(err.to_string()))?;
-        Ok(format!("{}", display))
+        Ok(format!("{display}"))
     }
 }

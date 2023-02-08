@@ -50,9 +50,9 @@ impl PyBallistaContext {
         let config = BallistaConfig::builder()
             .set(
                 "ballista.shuffle.partitions",
-                &format!("{}", shuffle_partitions),
+                &format!("{shuffle_partitions}"),
             )
-            .set("ballista.batch.size", &format!("{}", batch_size))
+            .set("ballista.batch.size", &format!("{batch_size}"))
             .set("ballista.with_information_schema", "true")
             .build()
             .map_err(BallistaError::from)?;

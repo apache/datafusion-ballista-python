@@ -48,7 +48,7 @@ fn to_rust_function(func: PyObject) -> ScalarFunctionImplementation {
                 let value = func.as_ref(py).call(py_args, None);
                 let value = match value {
                     Ok(n) => Ok(n),
-                    Err(error) => Err(DataFusionError::Execution(format!("{:?}", error))),
+                    Err(error) => Err(DataFusionError::Execution(format!("{error:?}"))),
                 }?;
 
                 // 3. cast to arrow::array::Array
