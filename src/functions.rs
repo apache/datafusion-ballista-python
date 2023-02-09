@@ -19,7 +19,7 @@ use datafusion::prelude::lit;
 use pyo3::{prelude::*, wrap_pyfunction};
 
 use datafusion::physical_plan::aggregates::AggregateFunction;
-use datafusion_expr::{self, BuiltinScalarFunction, window_function::find_df_window_func};
+use datafusion_expr::{self, window_function::find_df_window_func, BuiltinScalarFunction};
 
 use crate::expression::PyExpr;
 
@@ -61,19 +61,13 @@ fn concat_ws(sep: String, args: Vec<PyExpr>) -> PyResult<PyExpr> {
 
 /// Creates a new Sort expression
 #[pyfunction]
-fn order_by(
-    expr: PyExpr,
-    asc: Option<bool>,
-    nulls_first: Option<bool>,
-) -> PyResult<PyExpr> {
+fn order_by(expr: PyExpr, asc: Option<bool>, nulls_first: Option<bool>) -> PyResult<PyExpr> {
     Ok(PyExpr {
-        expr: datafusion_expr::expr::Expr::Sort (
-            datafusion_expr::expr::Sort {
-                expr: Box::new(expr.expr),
-                asc: asc.unwrap_or(true),
-                nulls_first: nulls_first.unwrap_or(true),
-            }
-        ),
+        expr: datafusion_expr::expr::Expr::Sort(datafusion_expr::expr::Sort {
+            expr: Box::new(expr.expr),
+            asc: asc.unwrap_or(true),
+            nulls_first: nulls_first.unwrap_or(true),
+        }),
     })
 }
 
@@ -81,10 +75,7 @@ fn order_by(
 #[pyfunction]
 fn alias(expr: PyExpr, name: &str) -> PyResult<PyExpr> {
     Ok(PyExpr {
-        expr: datafusion_expr::Expr::Alias(
-            Box::new(expr.expr),
-            String::from(name),
-        ),
+        expr: datafusion_expr::Expr::Alias(Box::new(expr.expr), String::from(name)),
     })
 }
 
@@ -99,22 +90,21 @@ fn window(
     let fun = find_df_window_func(name).unwrap();
     let has_order_by = order_by.is_some();
     Ok(PyExpr {
-        expr: datafusion_expr::expr::Expr::WindowFunction (
-            datafusion_expr::expr::WindowFunction {
-                fun,
-                args: args.into_iter().map(|x| x.expr).collect::<Vec<_>>(),
-                partition_by: partition_by
-                    .unwrap_or_default()
-                    .into_iter()
-                    .map(|x| x.expr)
-                    .collect::<Vec<_>>(),
-                order_by: order_by
-                    .unwrap_or_default()
-                    .into_iter()
-                    .map(|x| x.expr)
-                    .collect::<Vec<_>>(),
-                window_frame: datafusion_expr::window_frame::WindowFrame::new(has_order_by),
-            }),
+        expr: datafusion_expr::expr::Expr::WindowFunction(datafusion_expr::expr::WindowFunction {
+            fun,
+            args: args.into_iter().map(|x| x.expr).collect::<Vec<_>>(),
+            partition_by: partition_by
+                .unwrap_or_default()
+                .into_iter()
+                .map(|x| x.expr)
+                .collect::<Vec<_>>(),
+            order_by: order_by
+                .unwrap_or_default()
+                .into_iter()
+                .map(|x| x.expr)
+                .collect::<Vec<_>>(),
+            window_frame: datafusion_expr::window_frame::WindowFrame::new(has_order_by),
+        }),
     })
 }
 
