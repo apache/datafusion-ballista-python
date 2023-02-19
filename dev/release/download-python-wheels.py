@@ -35,8 +35,9 @@ import io
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Download python binary wheels from release candidate workflow runs.')
-    parser.add_argument('tag', type=str, help='datafusion RC release tag')
+        description="Download python binary wheels from release candidate workflow runs."
+    )
+    parser.add_argument("tag", type=str, help="datafusion RC release tag")
     args = parser.parse_args()
 
     tag = args.tag
@@ -44,7 +45,8 @@ def main():
     if not ghp_token:
         print(
             "ERROR: Personal Github token is required to download workflow artifacts. "
-            "Please specify a token through GH_TOKEN environment variable.")
+            "Please specify a token through GH_TOKEN environment variable."
+        )
         sys.exit(1)
 
     print(f"Downloading latest python wheels for RC tag {tag}...")
@@ -64,19 +66,25 @@ def main():
         artifacts_url = run["artifacts_url"]
 
     if artifacts_url is None:
-        print("ERROR: Could not find python wheel binaries from Github Action run")
+        print(
+            "ERROR: Could not find python wheel binaries from Github Action run"
+        )
         sys.exit(1)
     print(f"Found artifacts url: {artifacts_url}")
 
     download_url = None
-    artifacts = requests.get(artifacts_url, headers=headers).json()["artifacts"]
+    artifacts = requests.get(artifacts_url, headers=headers).json()[
+        "artifacts"
+    ]
     for artifact in artifacts:
         if artifact["name"] != "dist":
             continue
         download_url = artifact["archive_download_url"]
 
     if download_url is None:
-        print(f"ERROR: Could not resolve python wheel download URL from list of artifacts: {artifacts}")
+        print(
+            f"ERROR: Could not resolve python wheel download URL from list of artifacts: {artifacts}"
+        )
         sys.exit(1)
     print(f"Extracting archive from: {download_url}...")
 
@@ -88,11 +96,16 @@ def main():
     for entry in os.listdir("./"):
         if entry.endswith(".whl") or entry.endswith(".tar.gz"):
             print(f"Sign and checksum artifact: {entry}")
-            subprocess.check_output([
-                "gpg", "--armor",
-                "--output", entry + ".asc",
-                "--detach-sig", entry,
-            ])
+            subprocess.check_output(
+                [
+                    "gpg",
+                    "--armor",
+                    "--output",
+                    entry + ".asc",
+                    "--detach-sig",
+                    entry,
+                ]
+            )
 
             sha256 = hashlib.sha256()
             sha512 = hashlib.sha512()
