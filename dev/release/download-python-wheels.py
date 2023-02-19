@@ -90,7 +90,7 @@ def main():
             print(f"Sign and checksum artifact: {entry}")
             subprocess.check_output([
                 "gpg", "--armor",
-                "--output", entry+".asc",
+                "--output", entry + ".asc",
                 "--detach-sig", entry,
             ])
 
@@ -103,12 +103,12 @@ def main():
                         break
                     sha256.update(data)
                     sha512.update(data)
-            with open(entry+".sha256", "w") as fd:
+            with open(entry + ".sha256", "w") as fd:
                 fd.write(sha256.hexdigest())
                 fd.write("  ")
                 fd.write(entry)
                 fd.write("\n")
-            with open(entry+".sha512", "w") as fd:
+            with open(entry + ".sha512", "w") as fd:
                 fd.write(sha512.hexdigest())
                 fd.write("  ")
                 fd.write(entry)

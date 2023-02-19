@@ -23,7 +23,6 @@
 # pip install tomlkit
 
 import re
-import os
 import argparse
 from pathlib import Path
 import tomlkit
@@ -47,6 +46,7 @@ ballista_crates = {
     'executor': 'ballista/executor/Cargo.toml',
     'scheduler': 'ballista/scheduler/Cargo.toml',
 }
+
 
 def update_datafusion_version(cargo_toml: str, new_version: str):
     print(f'updating {cargo_toml}')

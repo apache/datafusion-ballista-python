@@ -63,7 +63,7 @@ def update_docker_compose(docker_compose_path: str, new_version: str):
     with open(docker_compose_path, "r+") as fd:
         data = fd.read()
         pattern = re.compile(r'(^\s+image:\sballista:)\d+\.\d+\.\d+(-SNAPSHOT)?', re.MULTILINE)
-        data = pattern.sub(r"\g<1>"+new_version, data)
+        data = pattern.sub(r"\g<1>" + new_version, data)
         fd.truncate(0)
         fd.seek(0)
         fd.write(data)

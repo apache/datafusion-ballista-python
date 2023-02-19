@@ -227,9 +227,9 @@ def get_windows_shell_eval(env):
 def run_from_travis():
     perr("Environment variables (excerpt):")
     dump_env_vars('TRAVIS_', '(BRANCH|COMMIT|PULL)')
-    if (os.environ['TRAVIS_REPO_SLUG'] == 'apache/arrow' and
-            os.environ['TRAVIS_BRANCH'] == 'master' and
-            os.environ['TRAVIS_EVENT_TYPE'] != 'pull_request'):
+    if (os.environ['TRAVIS_REPO_SLUG'] == 'apache/arrow'
+            and os.environ['TRAVIS_BRANCH'] == 'master'
+            and os.environ['TRAVIS_EVENT_TYPE'] != 'pull_request'):
         # Never skip anything on master builds in the official repository
         affected = dict.fromkeys(ALL_TOPICS, True)
     else:

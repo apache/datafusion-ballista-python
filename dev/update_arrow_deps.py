@@ -120,6 +120,5 @@ def main():
             update_commit_cargo_toml(cargo_toml, new_sha)
 
 
-
 if __name__ == "__main__":
     main()
