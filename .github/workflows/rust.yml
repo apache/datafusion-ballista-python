@@ -281,8 +281,8 @@ jobs:
           # check which Cargo.toml introduces formatting violation
           #
           # ignore ./Cargo.toml because putting workspaces in multi-line lists make it easy to read
-          ci/scripts/rust_toml_fmt.sh
-          git diff --exit-code
+          pwd | ls -al . | ci/scripts/rust_toml_fmt.sh
+          git diff --no-index --exit-code
         env:
           CARGO_HOME: "/github/home/.cargo"
           CARGO_TARGET_DIR: "/github/home/target"
