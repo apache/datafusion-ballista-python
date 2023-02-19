@@ -39,7 +39,7 @@ pub(crate) struct PyBallistaContext {
 #[pymethods]
 impl PyBallistaContext {
     #[new]
-    #[args(port = "50050", shuffle_partitions = 16, batch_size = 8192)]
+    #[pyo3(signature = (host= "localhost", port = 50050, shuffle_partitions = 16, batch_size = 8192))]
     fn new(
         py: Python,
         host: &str,
@@ -63,23 +63,16 @@ impl PyBallistaContext {
         Ok(PyBallistaContext { ctx })
     }
 
-    /// Returns a PyDataFrame whose plan corresponds to the SQL statement.
-    fn sql(&mut self, query: &str, py: Python) -> PyResult<PyDataFrame> {
-        let ctx = &self.ctx;
-
-        let result = ctx.sql(query);
-        let df = wait_for_future(py, result).map_err(BallistaError::from)?;
-        Ok(PyDataFrame::new(df))
-    }
-
     #[allow(clippy::too_many_arguments)]
-    #[args(
-        schema = "None",
-        has_header = "true",
+    #[pyo3(signature = (
+        name,
+        path,
+        schema,
+        has_header = true,
         delimiter = "\",\"",
-        schema_infer_max_records = "1000",
+        schema_infer_max_records = 1000,
         file_extension = "\".csv\""
-    )]
+        ))]
     fn register_csv(
         &mut self,
         name: &str,
@@ -115,6 +108,15 @@ impl PyBallistaContext {
         wait_for_future(py, result).map_err(BallistaError::from)?;
 
         Ok(())
+    }
+
+    /// Returns a PyDataFrame whose plan corresponds to the SQL statement.
+    fn sql(&mut self, query: &str, py: Python) -> PyResult<PyDataFrame> {
+        let ctx = &self.ctx;
+
+        let result = ctx.sql(query);
+        let df = wait_for_future(py, result).map_err(BallistaError::from)?;
+        Ok(PyDataFrame::new(df))
     }
 
     fn register_avro(&mut self, name: &str, path: &str, py: Python) -> PyResult<()> {

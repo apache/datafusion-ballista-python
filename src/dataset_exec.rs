@@ -15,10 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use datafusion::optimizer::utils::conjunction;
-use futures::TryStreamExt;
 /// Implements a Datafusion physical ExecutionPlan that delegates to a PyArrow Dataset
 /// This actually performs the projection, filtering and scanning of a Dataset
+use datafusion::optimizer::utils::conjunction;
+use futures::TryStreamExt;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyIterator, PyList};
 use std::any::Any;

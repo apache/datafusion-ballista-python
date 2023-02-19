@@ -50,17 +50,17 @@ pub(crate) struct PySessionContext {
 #[pymethods]
 impl PySessionContext {
     #[allow(clippy::too_many_arguments)]
-    #[args(
+    #[pyo3(signature = (
         default_catalog = "\"datafusion\"",
         default_schema = "\"public\"",
-        create_default_catalog_and_schema = "true",
-        information_schema = "false",
-        repartition_joins = "true",
-        repartition_aggregations = "true",
-        repartition_windows = "true",
-        parquet_pruning = "true",
-        target_partitions = "None"
-    )]
+        create_default_catalog_and_schema = true,
+        information_schema = false,
+        repartition_joins = true,
+        repartition_aggregations = true,
+        repartition_windows = true,
+        parquet_pruning = true,
+        target_partitions = None
+    ))]
     #[new]
     fn new(
         default_catalog: &str,
@@ -151,11 +151,13 @@ impl PySessionContext {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[args(
-        table_partition_cols = "vec![]",
-        parquet_pruning = "true",
+    #[pyo3(signature = (
+        name,
+        path,
+        table_partition_cols = vec![],
+        parquet_pruning = true,
         file_extension = "\".parquet\""
-    )]
+    ))]
     fn register_parquet(
         &mut self,
         name: &str,
@@ -175,13 +177,15 @@ impl PySessionContext {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[args(
-        schema = "None",
-        has_header = "true",
+    #[pyo3(signature = (
+        name,
+        path,
+        schema = None,
+        has_header = true,
         delimiter = "\",\"",
-        schema_infer_max_records = "1000",
+        schema_infer_max_records = 1000,
         file_extension = "\".csv\""
-    )]
+    ))]
     fn register_csv(
         &mut self,
         name: &str,
@@ -232,7 +236,7 @@ impl PySessionContext {
         Ok(())
     }
 
-    #[args(name = "\"datafusion\"")]
+    #[pyo3(signature = (name = "\"datafusion\""))]
     fn catalog(&self, name: &str) -> PyResult<PyCatalog> {
         match self.ctx.catalog(name) {
             Some(catalog) => Ok(PyCatalog::new(catalog)),
