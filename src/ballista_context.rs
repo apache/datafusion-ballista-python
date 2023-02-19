@@ -69,9 +69,9 @@ impl PyBallistaContext {
         path,
         schema,
         has_header = true,
-        delimiter = "\",\"",
+        delimiter = ",",
         schema_infer_max_records = 1000,
-        file_extension = "\".csv\""
+        file_extension = ".csv"
         ))]
     fn register_csv(
         &mut self,

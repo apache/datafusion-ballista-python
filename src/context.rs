@@ -51,8 +51,8 @@ pub(crate) struct PySessionContext {
 impl PySessionContext {
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (
-        default_catalog = "\"datafusion\"",
-        default_schema = "\"public\"",
+        default_catalog = "datafusion",
+        default_schema = "public",
         create_default_catalog_and_schema = true,
         information_schema = false,
         repartition_joins = true,
@@ -156,7 +156,7 @@ impl PySessionContext {
         path,
         table_partition_cols = vec![],
         parquet_pruning = true,
-        file_extension = "\".parquet\""
+        file_extension = ".parquet"
     ))]
     fn register_parquet(
         &mut self,
@@ -182,9 +182,9 @@ impl PySessionContext {
         path,
         schema = None,
         has_header = true,
-        delimiter = "\",\"",
+        delimiter = ",",
         schema_infer_max_records = 1000,
-        file_extension = "\".csv\""
+        file_extension = ".csv"
     ))]
     fn register_csv(
         &mut self,
@@ -236,7 +236,7 @@ impl PySessionContext {
         Ok(())
     }
 
-    #[pyo3(signature = (name = "\"datafusion\""))]
+    #[pyo3(signature = (name = "datafusion"))]
     fn catalog(&self, name: &str) -> PyResult<PyCatalog> {
         match self.ctx.catalog(name) {
             Some(catalog) => Ok(PyCatalog::new(catalog)),
