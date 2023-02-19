@@ -16,11 +16,11 @@
 // under the License.
 
 use datafusion::optimizer::utils::conjunction;
+use futures::TryStreamExt;
 /// Implements a Datafusion physical ExecutionPlan that delegates to a PyArrow Dataset
 /// This actually performs the projection, filtering and scanning of a Dataset
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyIterator, PyList};
-
 use std::any::Any;
 use std::sync::Arc;
 
@@ -228,8 +228,9 @@ impl ExecutionPlan for DatasetExec {
             };
 
             let record_batch_stream = stream::iter(record_batches);
-            let record_batch_stream: SendableRecordBatchStream =
-                Box::pin(RecordBatchStreamAdapter::new(schema, record_batch_stream));
+            let record_batch_stream: SendableRecordBatchStream = Box::pin(
+                RecordBatchStreamAdapter::new(schema, record_batch_stream.map_err(|e| e.into())),
+            );
             Ok(record_batch_stream)
         })
     }
