@@ -53,3 +53,6 @@ repository = "https://github.com/apache/arrow-ballista"
 
 [tool.isort]
 profile = "black"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
