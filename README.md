@@ -31,23 +31,26 @@ These bindings are essentially a copy of the DataFusion bindings.
 
 ### What works?
 
-- Connect to a Ballista scheduler and execute SQL queries against CSV, Parquet, and Avro files
+- Connect to a Ballista scheduler
+- Execute SQL queries
+- Use DataFrame API to read files and execute queries
+- Support for CSV, Parquet, Avro formats
 
 ### What does not work?
 
-- DataFrame API
 - Python UDFs
 
 ## Roadmap
 
-- Extend DataFusion's Python bindings and remove duplicate code
-- Add support for executing Python UDFs
-- Add support for executing against DataFrame libraries such as Polars, Pandas, and cuDF
-- Add support for Substrait
+- Support reading JSON.
+- Support distributed Python UDFs and UDAFs.
+- Add support for Substrait, allowing execution against other execution engines that are supported by DataFusion's 
+  Python bindings (currently, Polars, Pandas, and cuDF).
 
 ## Examples
 
 - [Query a Parquet file using SQL](./examples/sql-parquet.py)
+- [Query a Parquet file using DataFrame API](./examples/dataframe-parquet.py)
 
 ## How to install (from pip)
 

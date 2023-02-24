@@ -63,6 +63,38 @@ impl PyBallistaContext {
         Ok(PyBallistaContext { ctx })
     }
 
+    #[pyo3(signature = (path, has_header = false))]
+    fn read_csv(&self, path: PathBuf, has_header: bool, py: Python) -> PyResult<PyDataFrame> {
+        let path = path
+            .to_str()
+            .ok_or_else(|| PyValueError::new_err("Unable to convert path to a string"))?;
+        let result = self.ctx.read_csv(path, CsvReadOptions::default().has_header(has_header));
+        let df = wait_for_future(py, result);
+        Ok(PyDataFrame::new(df?))
+    }
+
+    #[pyo3(signature = (path))]
+    fn read_parquet(&self, path: PathBuf, py: Python) -> PyResult<PyDataFrame> {
+        let path = path
+            .to_str()
+            .ok_or_else(|| PyValueError::new_err("Unable to convert path to a string"))?;
+
+        let result =self.ctx.read_parquet(path, ParquetReadOptions::default());
+        let df = wait_for_future(py, result);
+        Ok(PyDataFrame::new(df?))
+    }
+
+    #[pyo3(signature = (path))]
+    fn read_avro(&self, path: PathBuf, py: Python) -> PyResult<PyDataFrame> {
+        let path = path
+            .to_str()
+            .ok_or_else(|| PyValueError::new_err("Unable to convert path to a string"))?;
+
+        let result =self.ctx.read_avro(path, AvroReadOptions::default());
+        let df = wait_for_future(py, result);
+        Ok(PyDataFrame::new(df?))
+    }
+
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (
         name,
@@ -110,15 +142,6 @@ impl PyBallistaContext {
         Ok(())
     }
 
-    /// Returns a PyDataFrame whose plan corresponds to the SQL statement.
-    fn sql(&mut self, query: &str, py: Python) -> PyResult<PyDataFrame> {
-        let ctx = &self.ctx;
-
-        let result = ctx.sql(query);
-        let df = wait_for_future(py, result).map_err(BallistaError::from)?;
-        Ok(PyDataFrame::new(df))
-    }
-
     fn register_avro(&mut self, name: &str, path: &str, py: Python) -> PyResult<()> {
         let ctx = &self.ctx;
 
@@ -135,5 +158,14 @@ impl PyBallistaContext {
         wait_for_future(py, result).map_err(BallistaError::from)?;
 
         Ok(())
+    }
+
+    /// Returns a PyDataFrame whose plan corresponds to the SQL statement.
+    fn sql(&mut self, query: &str, py: Python) -> PyResult<PyDataFrame> {
+        let ctx = &self.ctx;
+
+        let result = ctx.sql(query);
+        let df = wait_for_future(py, result).map_err(BallistaError::from)?;
+        Ok(PyDataFrame::new(df))
     }
 }
