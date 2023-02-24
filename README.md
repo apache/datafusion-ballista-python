@@ -24,17 +24,12 @@ engine [Ballista](https://github.com/apache/arrow-ballista).
 
 ## Status
 
-Ballista's Python bindings are currently not very actively maintained and were recently moved out of the main 
-Ballista repository to allow that project to move faster.
-
-These bindings are essentially a copy of the DataFusion bindings.
-
 ### What works?
 
 - Connect to a Ballista scheduler
-- Execute SQL queries
-- Use DataFrame API to read files and execute queries
-- Support for CSV, Parquet, Avro formats
+- Execute distributed SQL queries
+- Use DataFrame API to read files and execute distributed queries
+- Support for CSV, Parquet, and Avro formats
 
 ### What does not work?
 
@@ -42,10 +37,10 @@ These bindings are essentially a copy of the DataFusion bindings.
 
 ## Roadmap
 
-- Support reading JSON.
-- Support distributed Python UDFs and UDAFs.
+- Support reading JSON
+- Support distributed Python UDFs and UDAFs
 - Add support for Substrait, allowing execution against other execution engines that are supported by DataFusion's 
-  Python bindings (currently, Polars, Pandas, and cuDF).
+  Python bindings (currently, Polars, Pandas, and cuDF)
 
 ## Examples
 
