@@ -15,12 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use datafusion::optimizer::utils::conjunction;
 /// Implements a Datafusion physical ExecutionPlan that delegates to a PyArrow Dataset
 /// This actually performs the projection, filtering and scanning of a Dataset
+use datafusion::optimizer::utils::conjunction;
+use futures::TryStreamExt;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyIterator, PyList};
-
 use std::any::Any;
 use std::sync::Arc;
 
@@ -228,17 +228,14 @@ impl ExecutionPlan for DatasetExec {
             };
 
             let record_batch_stream = stream::iter(record_batches);
-            let record_batch_stream: SendableRecordBatchStream =
-                Box::pin(RecordBatchStreamAdapter::new(schema, record_batch_stream));
+            let record_batch_stream: SendableRecordBatchStream = Box::pin(
+                RecordBatchStreamAdapter::new(schema, record_batch_stream.map_err(|e| e.into())),
+            );
             Ok(record_batch_stream)
         })
     }
 
-    fn fmt_as(
-        &self,
-        t: DisplayFormatType,
-        f: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
+    fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         Python::with_gil(|py| {
             let number_of_fragments = self.fragments.as_ref(py).len();
             match t {
@@ -250,8 +247,7 @@ impl ExecutionPlan for DatasetExec {
                         .map(|x| x.name().to_owned())
                         .collect();
                     if let Some(filter_expr) = &self.filter_expr {
-                        let filter_expr =
-                            filter_expr.as_ref(py).str().or(Err(std::fmt::Error))?;
+                        let filter_expr = filter_expr.as_ref(py).str().or(Err(std::fmt::Error))?;
                         write!(
                             f,
                             "DatasetExec: number_of_fragments={}, filter_expr={}, projection=[{}]",

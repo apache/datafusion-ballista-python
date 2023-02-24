@@ -139,9 +139,9 @@ Bootstrap:
 
 ```bash
 # fetch this repo
-git clone git@github.com:apache/arrow-ballista.git
+git clone git@github.com:apache/arrow-ballista-python.git
 # change to python directory
-cd arrow-ballista/python
+cd arrow-ballista-python
 # prepare development environment (used to build wheel / install in development)
 python3 -m venv venv
 # activate the venv

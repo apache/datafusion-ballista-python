@@ -19,7 +19,7 @@ use datafusion::prelude::lit;
 use pyo3::{prelude::*, wrap_pyfunction};
 
 use datafusion::physical_plan::aggregates::AggregateFunction;
-use datafusion_expr::{self, BuiltinScalarFunction, window_function::find_df_window_func};
+use datafusion_expr::{self, window_function::find_df_window_func, BuiltinScalarFunction};
 
 use crate::expression::PyExpr;
 
@@ -35,7 +35,8 @@ fn in_list(expr: PyExpr, value: Vec<PyExpr>, negated: bool) -> PyExpr {
 
 /// Computes a binary hash of the given data. type is the algorithm to use.
 /// Standard algorithms are md5, sha224, sha256, sha384, sha512, blake2s, blake2b, and blake3.
-#[pyfunction(value, method)]
+#[pyfunction]
+#[pyo3(signature = (value, method))]
 fn digest(value: PyExpr, method: PyExpr) -> PyExpr {
     PyExpr {
         expr: datafusion_expr::expr_fn::digest(value.expr, method.expr),
@@ -44,7 +45,8 @@ fn digest(value: PyExpr, method: PyExpr) -> PyExpr {
 
 /// Concatenates the text representations of all the arguments.
 /// NULL arguments are ignored.
-#[pyfunction(args = "*")]
+#[pyfunction]
+#[pyo3(signature = (*args))]
 fn concat(args: Vec<PyExpr>) -> PyResult<PyExpr> {
     let args = args.into_iter().map(|e| e.expr).collect::<Vec<_>>();
     Ok(datafusion_expr::expr_fn::concat(&args).into())
@@ -53,7 +55,8 @@ fn concat(args: Vec<PyExpr>) -> PyResult<PyExpr> {
 /// Concatenates all but the first argument, with separators.
 /// The first argument is used as the separator string, and should not be NULL.
 /// Other NULL arguments are ignored.
-#[pyfunction(sep, args = "*")]
+#[pyfunction]
+#[pyo3(signature = (sep, *args))]
 fn concat_ws(sep: String, args: Vec<PyExpr>) -> PyResult<PyExpr> {
     let args = args.into_iter().map(|e| e.expr).collect::<Vec<_>>();
     Ok(datafusion_expr::expr_fn::concat_ws(lit(sep), args).into())
@@ -61,19 +64,13 @@ fn concat_ws(sep: String, args: Vec<PyExpr>) -> PyResult<PyExpr> {
 
 /// Creates a new Sort expression
 #[pyfunction]
-fn order_by(
-    expr: PyExpr,
-    asc: Option<bool>,
-    nulls_first: Option<bool>,
-) -> PyResult<PyExpr> {
+fn order_by(expr: PyExpr, asc: Option<bool>, nulls_first: Option<bool>) -> PyResult<PyExpr> {
     Ok(PyExpr {
-        expr: datafusion_expr::expr::Expr::Sort (
-            datafusion_expr::expr::Sort {
-                expr: Box::new(expr.expr),
-                asc: asc.unwrap_or(true),
-                nulls_first: nulls_first.unwrap_or(true),
-            }
-        ),
+        expr: datafusion_expr::expr::Expr::Sort(datafusion_expr::expr::Sort {
+            expr: Box::new(expr.expr),
+            asc: asc.unwrap_or(true),
+            nulls_first: nulls_first.unwrap_or(true),
+        }),
     })
 }
 
@@ -81,10 +78,7 @@ fn order_by(
 #[pyfunction]
 fn alias(expr: PyExpr, name: &str) -> PyResult<PyExpr> {
     Ok(PyExpr {
-        expr: datafusion_expr::Expr::Alias(
-            Box::new(expr.expr),
-            String::from(name),
-        ),
+        expr: datafusion_expr::Expr::Alias(Box::new(expr.expr), String::from(name)),
     })
 }
 
@@ -99,22 +93,21 @@ fn window(
     let fun = find_df_window_func(name).unwrap();
     let has_order_by = order_by.is_some();
     Ok(PyExpr {
-        expr: datafusion_expr::expr::Expr::WindowFunction (
-            datafusion_expr::expr::WindowFunction {
-                fun,
-                args: args.into_iter().map(|x| x.expr).collect::<Vec<_>>(),
-                partition_by: partition_by
-                    .unwrap_or_default()
-                    .into_iter()
-                    .map(|x| x.expr)
-                    .collect::<Vec<_>>(),
-                order_by: order_by
-                    .unwrap_or_default()
-                    .into_iter()
-                    .map(|x| x.expr)
-                    .collect::<Vec<_>>(),
-                window_frame: datafusion_expr::window_frame::WindowFrame::new(has_order_by),
-            }),
+        expr: datafusion_expr::expr::Expr::WindowFunction(datafusion_expr::expr::WindowFunction {
+            fun,
+            args: args.into_iter().map(|x| x.expr).collect::<Vec<_>>(),
+            partition_by: partition_by
+                .unwrap_or_default()
+                .into_iter()
+                .map(|x| x.expr)
+                .collect::<Vec<_>>(),
+            order_by: order_by
+                .unwrap_or_default()
+                .into_iter()
+                .map(|x| x.expr)
+                .collect::<Vec<_>>(),
+            window_frame: datafusion_expr::window_frame::WindowFrame::new(has_order_by),
+        }),
     })
 }
 
@@ -124,7 +117,8 @@ macro_rules! scalar_function {
     };
     ($NAME: ident, $FUNC: ident, $DOC: expr) => {
         #[doc = $DOC]
-        #[pyfunction(args = "*")]
+        #[pyfunction]
+        #[pyo3(signature = (*args))]
         fn $NAME(args: Vec<PyExpr>) -> PyExpr {
             let expr = datafusion_expr::Expr::ScalarFunction {
                 fun: BuiltinScalarFunction::$FUNC,
@@ -141,7 +135,8 @@ macro_rules! aggregate_function {
     };
     ($NAME: ident, $FUNC: ident, $DOC: expr) => {
         #[doc = $DOC]
-        #[pyfunction(args = "*", distinct = "false")]
+        #[pyfunction]
+        #[pyo3(signature = (*args, distinct=false))]
         fn $NAME(args: Vec<PyExpr>, distinct: bool) -> PyExpr {
             let expr = datafusion_expr::Expr::AggregateFunction({
                 datafusion_expr::expr::AggregateFunction {

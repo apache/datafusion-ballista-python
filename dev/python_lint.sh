@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-#
+#!/bin/bash
+
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,5 +17,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set -ex
-find . -mindepth 2 -name 'Cargo.toml' -exec cargo tomlfmt -k -p {} \;
+# This script runs all the Rust lints locally the same way the
+# DataFusion CI does
+
+set -e
+source venv/bin/activate
+flake8 --exclude venv --ignore=E501,W503
+black --line-length 79 --diff --check .
