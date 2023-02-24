@@ -17,111 +17,35 @@
   under the License.
 -->
 
-## Python bindings for Ballista
+# Ballista Python Bindings (PyBallista)
 
-This is a Python library that binds to [Apache Arrow](https://arrow.apache.org/) distributed query engine [Ballista](https://github.com/apache/arrow-ballista).
+This is a Python library that binds to [Apache Arrow](https://arrow.apache.org/) distributed query
+engine [Ballista](https://github.com/apache/arrow-ballista).
 
-Like pyspark, it allows you to build a plan through SQL or a DataFrame API against Parquet or CSV files, run it in a distributed environment, and obtain the result back in Python.
+## Status
 
-It also allows you to use UDFs and UDAFs for complex operations.
+### What works?
 
-The major advantage of this library over other execution engines is that this library achieves zero-copy between Python and its execution engine: there is no cost in using UDFs, UDAFs, and collecting the results to Python apart from having to lock the GIL when running those operations.
+- Connect to a Ballista scheduler
+- Execute distributed SQL queries
+- Use DataFrame API to read files and execute distributed queries
+- Support for CSV, Parquet, and Avro formats
 
-Its query engine, DataFusion, is written in [Rust](https://www.rust-lang.org/), which makes strong assumptions about thread safety and lack of memory leaks.
+### What does not work?
 
-Technically, zero-copy is achieved via the [c data interface](https://arrow.apache.org/docs/format/CDataInterface.html).
+- Python UDFs
 
-## How to use it
+## Roadmap
 
-Simple usage:
+- Support reading JSON
+- Support distributed Python UDFs and UDAFs
+- Support distributed query execution against Python DataFrame libraries such as Polars, Pandas, and cuDF, that are
+  already supported by DataFusion's Python bindings (this will require new features in Ballista)
 
-```python
-import ballista
-import pyarrow
+## Examples
 
-# an alias
-f = ballista.functions
-
-# create a context
-ctx = ballista.BallistaContext("localhost", 50050)
-
-# create a RecordBatch and a new DataFrame from it
-batch = pyarrow.RecordBatch.from_arrays(
-    [pyarrow.array([1, 2, 3]), pyarrow.array([4, 5, 6])],
-    names=["a", "b"],
-)
-df = ctx.create_dataframe([[batch]])
-
-# create a new statement
-df = df.select(
-    f.col("a") + f.col("b"),
-    f.col("a") - f.col("b"),
-)
-
-# execute and collect the first (and only) batch
-result = df.collect()[0]
-
-assert result.column(0) == pyarrow.array([5, 7, 9])
-assert result.column(1) == pyarrow.array([-3, -3, -3])
-```
-
-### Specifying Configuration Options
-
-Configuration settings can be specified when creating the context.
-
-```python
-ctx = ballista.BallistaContext("localhost", 50050, shuffle_partitions = 200, batch_size = 16384)
-```
-
-### UDFs
-
-```python
-def is_null(array: pyarrow.Array) -> pyarrow.Array:
-    return array.is_null()
-
-udf = f.udf(is_null, [pyarrow.int64()], pyarrow.bool_())
-
-df = df.select(udf(f.col("a")))
-```
-
-### UDAF
-
-```python
-import pyarrow
-import pyarrow.compute
-
-
-class Accumulator:
-    """
-    Interface of a user-defined accumulation.
-    """
-    def __init__(self):
-        self._sum = pyarrow.scalar(0.0)
-
-    def to_scalars(self) -> [pyarrow.Scalar]:
-        return [self._sum]
-
-    def update(self, values: pyarrow.Array) -> None:
-        # not nice since pyarrow scalars can't be summed yet. This breaks on `None`
-        self._sum = pyarrow.scalar(self._sum.as_py() + pyarrow.compute.sum(values).as_py())
-
-    def merge(self, states: pyarrow.Array) -> None:
-        # not nice since pyarrow scalars can't be summed yet. This breaks on `None`
-        self._sum = pyarrow.scalar(self._sum.as_py() + pyarrow.compute.sum(states).as_py())
-
-    def evaluate(self) -> pyarrow.Scalar:
-        return self._sum
-
-
-df = ...
-
-udaf = f.udaf(Accumulator, pyarrow.float64(), pyarrow.float64(), [pyarrow.float64()])
-
-df = df.aggregate(
-    [],
-    [udaf(f.col("a"))]
-)
-```
+- [Query a Parquet file using SQL](./examples/sql-parquet.py)
+- [Query a Parquet file using DataFrame API](./examples/dataframe-parquet.py)
 
 ## How to install (from pip)
 

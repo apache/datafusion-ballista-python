@@ -15,13 +15,39 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use crate::expression::PyExpr;
+use datafusion::common::Column;
+use datafusion::physical_plan::aggregates::AggregateFunction;
 use datafusion::prelude::lit;
+use datafusion_expr::Expr;
+use datafusion_expr::{
+    self, aggregate_function, window_function::find_df_window_func, BuiltinScalarFunction,
+};
 use pyo3::{prelude::*, wrap_pyfunction};
 
-use datafusion::physical_plan::aggregates::AggregateFunction;
-use datafusion_expr::{self, window_function::find_df_window_func, BuiltinScalarFunction};
+/// Create a column reference Expr
+#[pyfunction]
+fn col(name: &str) -> PyResult<PyExpr> {
+    Ok(PyExpr {
+        expr: datafusion_expr::Expr::Column(Column {
+            relation: None,
+            name: name.to_string(),
+        }),
+    })
+}
 
-use crate::expression::PyExpr;
+/// Create a COUNT(1) aggregate expression
+#[pyfunction]
+fn count_star() -> PyResult<PyExpr> {
+    Ok(PyExpr {
+        expr: Expr::AggregateFunction(datafusion_expr::expr::AggregateFunction::new(
+            aggregate_function::AggregateFunction::Count,
+            vec![lit(1)],
+            false,
+            None,
+        )),
+    })
+}
 
 #[pyfunction]
 fn in_list(expr: PyExpr, value: Vec<PyExpr>, negated: bool) -> PyExpr {
@@ -296,8 +322,10 @@ pub(crate) fn init_module(m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(coalesce))?;
     m.add_wrapped(wrap_pyfunction!(concat_ws))?;
     m.add_wrapped(wrap_pyfunction!(concat))?;
+    m.add_wrapped(wrap_pyfunction!(col))?;
     m.add_wrapped(wrap_pyfunction!(cos))?;
     m.add_wrapped(wrap_pyfunction!(count))?;
+    m.add_wrapped(wrap_pyfunction!(count_star))?;
     m.add_wrapped(wrap_pyfunction!(current_date))?;
     m.add_wrapped(wrap_pyfunction!(current_time))?;
     m.add_wrapped(wrap_pyfunction!(date_bin))?;

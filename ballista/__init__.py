@@ -24,7 +24,6 @@ from ._internal import (
     AggregateUDF,
     BallistaContext,
     DataFrame,
-    SessionContext,
     Expression,
     ScalarUDF,
 )
@@ -33,7 +32,6 @@ from ._internal import (
 __all__ = [
     "BallistaContext",
     "DataFrame",
-    "SessionContext",
     "Expression",
     "AggregateUDF",
     "ScalarUDF",

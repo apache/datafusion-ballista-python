@@ -20,15 +20,9 @@ use mimalloc::MiMalloc;
 use pyo3::prelude::*;
 
 #[allow(clippy::borrow_deref_ref)]
-mod ballista_context;
-#[allow(clippy::borrow_deref_ref)]
-pub mod catalog;
-#[allow(clippy::borrow_deref_ref)]
 mod context;
 #[allow(clippy::borrow_deref_ref)]
 mod dataframe;
-mod dataset;
-mod dataset_exec;
 #[allow(clippy::borrow_deref_ref)]
 mod datatype;
 pub mod errors;
@@ -36,7 +30,6 @@ pub mod errors;
 mod expression;
 #[allow(clippy::borrow_deref_ref)]
 mod functions;
-mod pyarrow_filter_expression;
 #[allow(clippy::borrow_deref_ref)]
 mod udaf;
 #[allow(clippy::borrow_deref_ref)]
@@ -54,11 +47,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 #[pymodule]
 fn _internal(py: Python, m: &PyModule) -> PyResult<()> {
     // Register the python classes
-    m.add_class::<catalog::PyCatalog>()?;
-    m.add_class::<catalog::PyDatabase>()?;
-    m.add_class::<catalog::PyTable>()?;
-    m.add_class::<ballista_context::PyBallistaContext>()?;
-    m.add_class::<context::PySessionContext>()?;
+    m.add_class::<context::PyBallistaContext>()?;
     m.add_class::<dataframe::PyDataFrame>()?;
     m.add_class::<expression::PyExpr>()?;
     m.add_class::<udf::PyScalarUDF>()?;
