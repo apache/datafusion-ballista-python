@@ -18,7 +18,8 @@
 from ballista import BallistaContext
 from ballista import functions as f
 
-ctx = BallistaContext("localhost", 50050, shuffle_partitions = 16, batch_size = 8192)
+
+ctx = BallistaContext("localhost", 50050, shuffle_partitions=16, batch_size=8192)
 df = ctx.read_parquet("yellow_tripdata_2021-01.parquet").aggregate(
     [f.col("passenger_count")], [f.count_star()]
 )
