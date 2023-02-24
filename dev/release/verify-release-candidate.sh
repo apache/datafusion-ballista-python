@@ -133,19 +133,19 @@ test_source_distribution() {
 #  popd
 #  export TPCH_DATA=`pwd`/benchmarks/data
 
-  cargo build
-  cargo test --all
+  python3 -m venv venv
+  source venv/bin/activate
+  python3 -m pip install -U pip
+  python3 -m pip install -r requirements-310.txt
+  maturin develop
+
+  #TODO: we should really run tests here as well
+  #python3 -m pytest
 
   if ( find -iname 'Cargo.toml' | xargs grep SNAPSHOT ); then
     echo "Cargo.toml version should not contain SNAPSHOT for releases"
     exit 1
   fi
-
-  # Note can't verify other ballista crates as they depend
-  # on ballista-core which isn't published yet
-  pushd ballista/core
-    cargo publish --dry-run
-  popd
 }
 
 TEST_SUCCESS=no
