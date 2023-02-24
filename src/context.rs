@@ -68,7 +68,9 @@ impl PyBallistaContext {
         let path = path
             .to_str()
             .ok_or_else(|| PyValueError::new_err("Unable to convert path to a string"))?;
-        let result = self.ctx.read_csv(path, CsvReadOptions::default().has_header(has_header));
+        let result = self
+            .ctx
+            .read_csv(path, CsvReadOptions::default().has_header(has_header));
         let df = wait_for_future(py, result);
         Ok(PyDataFrame::new(df?))
     }
@@ -79,7 +81,7 @@ impl PyBallistaContext {
             .to_str()
             .ok_or_else(|| PyValueError::new_err("Unable to convert path to a string"))?;
 
-        let result =self.ctx.read_parquet(path, ParquetReadOptions::default());
+        let result = self.ctx.read_parquet(path, ParquetReadOptions::default());
         let df = wait_for_future(py, result);
         Ok(PyDataFrame::new(df?))
     }
@@ -90,7 +92,7 @@ impl PyBallistaContext {
             .to_str()
             .ok_or_else(|| PyValueError::new_err("Unable to convert path to a string"))?;
 
-        let result =self.ctx.read_avro(path, AvroReadOptions::default());
+        let result = self.ctx.read_avro(path, AvroReadOptions::default());
         let df = wait_for_future(py, result);
         Ok(PyDataFrame::new(df?))
     }

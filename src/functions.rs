@@ -15,13 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use datafusion::prelude::lit;
-use pyo3::{prelude::*, wrap_pyfunction};
+use crate::expression::PyExpr;
 use datafusion::common::Column;
 use datafusion::physical_plan::aggregates::AggregateFunction;
-use datafusion_expr::{self, aggregate_function, window_function::find_df_window_func, BuiltinScalarFunction};
+use datafusion::prelude::lit;
 use datafusion_expr::Expr;
-use crate::expression::PyExpr;
+use datafusion_expr::{
+    self, aggregate_function, window_function::find_df_window_func, BuiltinScalarFunction,
+};
+use pyo3::{prelude::*, wrap_pyfunction};
 
 /// Create a column reference Expr
 #[pyfunction]
