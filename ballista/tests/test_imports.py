@@ -20,8 +20,8 @@ import pytest
 import ballista
 from ballista import (
     AggregateUDF,
+    BallistaContext,
     DataFrame,
-    SessionContext,
     Expression,
     ScalarUDF,
     functions,
@@ -34,7 +34,7 @@ def test_import_ballista():
 
 def test_class_module_is_ballista():
     for klass in [
-        SessionContext,
+        BallistaContext,
         Expression,
         DataFrame,
         ScalarUDF,
@@ -55,7 +55,7 @@ def test_import_from_functions_submodule():
 
 
 def test_classes_are_inheritable():
-    class MyExecContext(SessionContext):
+    class MyExecContext(BallistaContext):
         pass
 
     class MyExpression(Expression):

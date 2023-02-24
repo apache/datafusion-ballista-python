@@ -17,111 +17,37 @@
   under the License.
 -->
 
-## Python bindings for Ballista
+# Ballista Python Bindings (PyBallista)
 
-This is a Python library that binds to [Apache Arrow](https://arrow.apache.org/) distributed query engine [Ballista](https://github.com/apache/arrow-ballista).
+This is a Python library that binds to [Apache Arrow](https://arrow.apache.org/) distributed query 
+engine [Ballista](https://github.com/apache/arrow-ballista).
 
-Like pyspark, it allows you to build a plan through SQL or a DataFrame API against Parquet or CSV files, run it in a distributed environment, and obtain the result back in Python.
+## Status
 
-It also allows you to use UDFs and UDAFs for complex operations.
+Ballista's Python bindings are currently not very actively maintained and were recently moved out of the main 
+Ballista repository to allow that project to move faster.
 
-The major advantage of this library over other execution engines is that this library achieves zero-copy between Python and its execution engine: there is no cost in using UDFs, UDAFs, and collecting the results to Python apart from having to lock the GIL when running those operations.
+These bindings are essentially a copy of the DataFusion bindings.
 
-Its query engine, DataFusion, is written in [Rust](https://www.rust-lang.org/), which makes strong assumptions about thread safety and lack of memory leaks.
+### What works?
 
-Technically, zero-copy is achieved via the [c data interface](https://arrow.apache.org/docs/format/CDataInterface.html).
+- Connect to a Ballista scheduler and execute SQL queries against CSV, Parquet, and Avro files
 
-## How to use it
+### What does not work?
 
-Simple usage:
+- DataFrame API
+- Python UDFs
 
-```python
-import ballista
-import pyarrow
+## Roadmap
 
-# an alias
-f = ballista.functions
+- Extend DataFusion's Python bindings and remove duplicate code
+- Add support for executing Python UDFs
+- Add support for executing against DataFrame libraries such as Polars, Pandas, and cuDF
+- Add support for Substrait
 
-# create a context
-ctx = ballista.BallistaContext("localhost", 50050)
+## Examples
 
-# create a RecordBatch and a new DataFrame from it
-batch = pyarrow.RecordBatch.from_arrays(
-    [pyarrow.array([1, 2, 3]), pyarrow.array([4, 5, 6])],
-    names=["a", "b"],
-)
-df = ctx.create_dataframe([[batch]])
-
-# create a new statement
-df = df.select(
-    f.col("a") + f.col("b"),
-    f.col("a") - f.col("b"),
-)
-
-# execute and collect the first (and only) batch
-result = df.collect()[0]
-
-assert result.column(0) == pyarrow.array([5, 7, 9])
-assert result.column(1) == pyarrow.array([-3, -3, -3])
-```
-
-### Specifying Configuration Options
-
-Configuration settings can be specified when creating the context.
-
-```python
-ctx = ballista.BallistaContext("localhost", 50050, shuffle_partitions = 200, batch_size = 16384)
-```
-
-### UDFs
-
-```python
-def is_null(array: pyarrow.Array) -> pyarrow.Array:
-    return array.is_null()
-
-udf = f.udf(is_null, [pyarrow.int64()], pyarrow.bool_())
-
-df = df.select(udf(f.col("a")))
-```
-
-### UDAF
-
-```python
-import pyarrow
-import pyarrow.compute
-
-
-class Accumulator:
-    """
-    Interface of a user-defined accumulation.
-    """
-    def __init__(self):
-        self._sum = pyarrow.scalar(0.0)
-
-    def to_scalars(self) -> [pyarrow.Scalar]:
-        return [self._sum]
-
-    def update(self, values: pyarrow.Array) -> None:
-        # not nice since pyarrow scalars can't be summed yet. This breaks on `None`
-        self._sum = pyarrow.scalar(self._sum.as_py() + pyarrow.compute.sum(values).as_py())
-
-    def merge(self, states: pyarrow.Array) -> None:
-        # not nice since pyarrow scalars can't be summed yet. This breaks on `None`
-        self._sum = pyarrow.scalar(self._sum.as_py() + pyarrow.compute.sum(states).as_py())
-
-    def evaluate(self) -> pyarrow.Scalar:
-        return self._sum
-
-
-df = ...
-
-udaf = f.udaf(Accumulator, pyarrow.float64(), pyarrow.float64(), [pyarrow.float64()])
-
-df = df.aggregate(
-    [],
-    [udaf(f.col("a"))]
-)
-```
+- [Query a Parquet file using SQL](./examples/sql-parquet.py)
 
 ## How to install (from pip)
 

@@ -20,8 +20,6 @@ use mimalloc::MiMalloc;
 use pyo3::prelude::*;
 
 #[allow(clippy::borrow_deref_ref)]
-mod ballista_context;
-#[allow(clippy::borrow_deref_ref)]
 pub mod catalog;
 #[allow(clippy::borrow_deref_ref)]
 mod context;
@@ -57,8 +55,7 @@ fn _internal(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<catalog::PyCatalog>()?;
     m.add_class::<catalog::PyDatabase>()?;
     m.add_class::<catalog::PyTable>()?;
-    m.add_class::<ballista_context::PyBallistaContext>()?;
-    m.add_class::<context::PySessionContext>()?;
+    m.add_class::<context::PyBallistaContext>()?;
     m.add_class::<dataframe::PyDataFrame>()?;
     m.add_class::<expression::PyExpr>()?;
     m.add_class::<udf::PyScalarUDF>()?;
