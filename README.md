@@ -19,7 +19,7 @@
 
 # Ballista Python Bindings (PyBallista)
 
-This is a Python library that binds to [Apache Arrow](https://arrow.apache.org/) distributed query 
+This is a Python library that binds to [Apache Arrow](https://arrow.apache.org/) distributed query
 engine [Ballista](https://github.com/apache/arrow-ballista).
 
 ## Status
@@ -39,8 +39,8 @@ engine [Ballista](https://github.com/apache/arrow-ballista).
 
 - Support reading JSON
 - Support distributed Python UDFs and UDAFs
-- Add support for Substrait, allowing execution against other execution engines that are supported by DataFusion's 
-  Python bindings (currently, Polars, Pandas, and cuDF)
+- Support distributed query execution against Python DataFrame libraries such as Polars, Pandas, and cuDF, that are
+  already supported by DataFusion's Python bindings (this will require new features in Ballista)
 
 ## Examples
 
