@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use crate::executor::PyExecutor;
 #[cfg(feature = "mimalloc")]
 use mimalloc::MiMalloc;
 use pyo3::prelude::*;
@@ -26,6 +27,8 @@ mod dataframe;
 #[allow(clippy::borrow_deref_ref)]
 mod datatype;
 pub mod errors;
+#[allow(clippy::borrow_deref_ref)]
+mod executor;
 #[allow(clippy::borrow_deref_ref)]
 mod expression;
 #[allow(clippy::borrow_deref_ref)]
@@ -52,6 +55,7 @@ fn _internal(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<expression::PyExpr>()?;
     m.add_class::<udf::PyScalarUDF>()?;
     m.add_class::<udaf::PyAggregateUDF>()?;
+    m.add_class::<PyExecutor>()?;
 
     // Register the functions as a submodule
     let funcs = PyModule::new(py, "functions")?;
