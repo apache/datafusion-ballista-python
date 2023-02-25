@@ -15,16 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use ballista_core::config::{LogRotationPolicy, TaskSchedulingPolicy};
-use ballista_executor::executor_process::{ExecutorProcessConfig, start_executor_process};
-use pyo3::prelude::*;
 use crate::errors::BallistaError;
 use crate::utils::wait_for_future;
+use ballista_core::config::{LogRotationPolicy, TaskSchedulingPolicy};
+use ballista_executor::executor_process::{start_executor_process, ExecutorProcessConfig};
+use pyo3::prelude::*;
 
 /// Python wrapper around an executor, allowing users to run an executor within a Python process.
 #[pyclass(name = "Executor", module = "ballista", subclass)]
-pub struct PyExecutor {
-}
+pub struct PyExecutor {}
 
 #[pymethods]
 impl PyExecutor {
@@ -46,7 +45,6 @@ impl PyExecutor {
         concurrent_tasks: usize,
         py: Python,
     ) -> PyResult<Self> {
-
         // TODO add option to register a custom query stage executor ExecutionPlan so
         // that we can execute Python plans (delegating to DataFrame libraries)
 
@@ -66,13 +64,13 @@ impl PyExecutor {
             log_file_name_prefix: "".to_string(),
             log_rotation_policy: LogRotationPolicy::Daily,
             print_thread_info: true,
-            job_data_ttl_seconds: 60*60,
-            job_data_clean_up_interval_seconds: 60*30,
+            job_data_ttl_seconds: 60 * 60,
+            job_data_clean_up_interval_seconds: 60 * 30,
         };
 
         let fut = start_executor_process(config);
         let _ = wait_for_future(py, fut).map_err(|e| BallistaError::Common(format!("{}", e)))?;
 
-        Ok(Self {  })
+        Ok(Self {})
     }
 }
