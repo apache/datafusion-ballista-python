@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use crate::executor::PyExecutor;
+use crate::scheduler::PyScheduler;
 #[cfg(feature = "mimalloc")]
 use mimalloc::MiMalloc;
 use pyo3::prelude::*;
@@ -27,9 +29,13 @@ mod dataframe;
 mod datatype;
 pub mod errors;
 #[allow(clippy::borrow_deref_ref)]
+mod executor;
+#[allow(clippy::borrow_deref_ref)]
 mod expression;
 #[allow(clippy::borrow_deref_ref)]
 mod functions;
+#[allow(clippy::borrow_deref_ref)]
+mod scheduler;
 #[allow(clippy::borrow_deref_ref)]
 mod udaf;
 #[allow(clippy::borrow_deref_ref)]
@@ -52,6 +58,8 @@ fn _internal(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<expression::PyExpr>()?;
     m.add_class::<udf::PyScalarUDF>()?;
     m.add_class::<udaf::PyAggregateUDF>()?;
+    m.add_class::<PyExecutor>()?;
+    m.add_class::<PyScheduler>()?;
 
     // Register the functions as a submodule
     let funcs = PyModule::new(py, "functions")?;

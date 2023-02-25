@@ -26,14 +26,15 @@ engine [Ballista](https://github.com/apache/arrow-ballista).
 
 ### What works?
 
-- Connect to a Ballista scheduler
-- Execute distributed SQL queries
-- Use DataFrame API to read files and execute distributed queries
+- Start Ballista schedulers and executors from Python
+- Execute distributed SQL queries (with DataFusion backend)
+- Use DataFrame API to read files and execute distributed queries (with DataFusion backend)
 - Support for CSV, Parquet, and Avro formats
 
 ### What does not work?
 
 - Python UDFs
+- JSON
 
 ## Roadmap
 
@@ -46,6 +47,8 @@ engine [Ballista](https://github.com/apache/arrow-ballista).
 
 - [Query a Parquet file using SQL](./examples/sql-parquet.py)
 - [Query a Parquet file using DataFrame API](./examples/dataframe-parquet.py)
+- [Start a scheduler from within a Python process](./examples/run-scheduler.py)
+- [Start an executor from within a Python process](./examples/run-executor.py)
 
 ## How to install (from pip)
 

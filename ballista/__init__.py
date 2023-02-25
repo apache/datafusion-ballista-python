@@ -25,6 +25,8 @@ from ._internal import (
     BallistaContext,
     DataFrame,
     Expression,
+    Executor,
+    Scheduler,
     ScalarUDF,
 )
 
@@ -33,6 +35,8 @@ __all__ = [
     "BallistaContext",
     "DataFrame",
     "Expression",
+    "Executor",
+    "Scheduler",
     "AggregateUDF",
     "ScalarUDF",
     "column",
