@@ -19,9 +19,11 @@ from ballista import Executor
 
 
 # start an executor from this Python process
-exec = Executor(scheduler_host = "localhost",
-                scheduler_port = 50050,
-                bind_host = "127.0.0.1",
-                bind_port = 50051,
-                grpc_port = 50052,
-                concurrent_tasks = 1)
+exec = Executor(
+    scheduler_host="localhost",
+    scheduler_port=50050,
+    bind_host="127.0.0.1",
+    bind_port=50051,
+    grpc_port=50052,
+    concurrent_tasks=1,
+)
