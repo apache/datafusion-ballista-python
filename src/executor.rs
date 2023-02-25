@@ -22,7 +22,12 @@ use ballista_core::execution_plans::ShuffleWriterExec;
 use ballista_executor::executor::ExecutionEngine;
 use ballista_executor::executor_process::{start_executor_process, ExecutorProcessConfig};
 use datafusion::physical_plan::ExecutionPlan;
+use datafusion_substrait::physical_plan::producer::to_substrait_rel;
+use datafusion_substrait::substrait::proto::{extensions, plan_rel, Plan, PlanRel, RelRoot};
+use prost::Message;
 use pyo3::prelude::*;
+use pyo3::types::{IntoPyDict, PyTuple};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Python wrapper around an executor, allowing users to run an executor within a Python process.
@@ -87,18 +92,31 @@ impl ExecutionEngine for PythonExecutionEngine {
         plan: Arc<dyn ExecutionPlan>,
         work_dir: &str,
     ) -> Result<Arc<ShuffleWriterExec>, ballista_core::error::BallistaError> {
+        // serialize the plan to substrait format
+        let substrait_plan = to_substrait_plan(plan.as_ref())
+            .map_err(|e| ballista_core::error::BallistaError::General(format!("{}", e)))?;
+        let mut plan_bytes = Vec::<u8>::new();
+        substrait_plan.encode(&mut plan_bytes).map_err(|e| {
+            ballista_core::error::BallistaError::General(format!(
+                "Failed to encode substrait plan: {e}"
+            ))
+        })?;
+
+        // call Python code to execute the substrait plan
         Python::with_gil(|py| {
             let fun: Py<PyAny> = PyModule::from_code(
                 py,
-                "def example(*args, **kwargs):
-                    print('hello from Python')",
+                "def execute_substrait(*args, **kwargs):
+                    print('[Python] execute_substrait with', len(kwargs['plan_bytes']), 'bytes'",
                 "",
                 "",
             )?
-            .getattr("example")?
+            .getattr("execute_substrait")?
             .into();
 
-            fun.call(py, (), None)?;
+            let py_bytes = plan_bytes.into_py(py);
+            let kwargs = vec![("plan_bytes", py_bytes)];
+            fun.call(py, (), Some(kwargs.into_py_dict(py)))?;
 
             Ok(())
         })
@@ -110,4 +128,39 @@ impl ExecutionEngine for PythonExecutionEngine {
             "PythonExecutionEngine not implemented yet".to_string(),
         ))
     }
+}
+
+// TODO upstream this into datafusion-substrait
+/// Convert DataFusion ExecutionPlan to Substrait Plan
+pub fn to_substrait_plan(plan: &dyn ExecutionPlan) -> Result<Box<Plan>, BallistaError> {
+    // Parse relation nodes
+    let mut extension_info: (
+        Vec<extensions::SimpleExtensionDeclaration>,
+        HashMap<String, u32>,
+    ) = (vec![], HashMap::new());
+    // Generate PlanRel(s)
+    // Note: Only 1 relation tree is currently supported
+    let plan_rels = vec![PlanRel {
+        rel_type: Some(plan_rel::RelType::Root(RelRoot {
+            input: Some(*to_substrait_rel(plan, &mut extension_info)?),
+            names: plan
+                .schema()
+                .fields()
+                .iter()
+                .map(|f| f.name().clone())
+                .collect(),
+        })),
+    }];
+
+    let (function_extensions, _) = extension_info;
+
+    // Return parsed plan
+    Ok(Box::new(Plan {
+        version: None, // TODO: https://github.com/apache/arrow-datafusion/issues/4949
+        extension_uris: vec![],
+        extensions: function_extensions,
+        relations: plan_rels,
+        advanced_extensions: None,
+        expected_type_urls: vec![],
+    }))
 }

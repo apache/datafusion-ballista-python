@@ -38,11 +38,16 @@ async-trait = "0.1"
 ballista = { git = "https://github.com/andygrove/arrow-ballista", branch = "experiment" }
 ballista-core = { git = "https://github.com/andygrove/arrow-ballista", branch = "experiment" }
 ballista-executor = { git = "https://github.com/andygrove/arrow-ballista", branch = "experiment" }
+ballista-scheduler = { git = "https://github.com/andygrove/arrow-ballista", branch = "experiment" }
 datafusion = { version = "18.0.0", features = ["pyarrow"] }
 datafusion-common = "18.0.0"
 datafusion-expr = "18.0.0"
+datafusion-substrait = "18.0.0"
+env_logger = "0.10.0"
 futures = "0.3"
+log = "0.4"
 mimalloc = { version = "*", optional = true, default-features = false }
+prost = "0.11"
 pyo3 = { version = "0.18", features = ["extension-module", "abi3", "abi3-py37"] }
 rand = "0.7"
 serde_json = { version = "1.0.85", features = ["std"] }

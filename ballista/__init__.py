@@ -26,6 +26,7 @@ from ._internal import (
     DataFrame,
     Expression,
     Executor,
+    Scheduler,
     ScalarUDF,
 )
 
@@ -35,6 +36,7 @@ __all__ = [
     "DataFrame",
     "Expression",
     "Executor",
+    "Scheduler",
     "AggregateUDF",
     "ScalarUDF",
     "column",
