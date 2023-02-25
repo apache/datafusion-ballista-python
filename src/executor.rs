@@ -45,8 +45,6 @@ impl PyExecutor {
         concurrent_tasks: usize,
         py: Python,
     ) -> PyResult<Self> {
-        env_logger::init();
-
         // TODO add option to register a custom query stage executor ExecutionPlan so
         // that we can execute Python plans (delegating to DataFrame libraries)
 

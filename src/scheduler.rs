@@ -21,6 +21,7 @@ use ballista_core::config::TaskSchedulingPolicy;
 use ballista_scheduler::cluster::BallistaCluster;
 use ballista_scheduler::config::{ClusterStorageConfig, SchedulerConfig, SlotsPolicy};
 use ballista_scheduler::scheduler_process::start_server;
+use log::info;
 use pyo3::prelude::*;
 
 /// Python wrapper around a scheduler, allowing users to run an scheduler within a Python process.
@@ -37,6 +38,8 @@ impl PyScheduler {
     ))]
     fn new(bind_host: &str, bind_port: u16, external_host: &str, py: Python) -> PyResult<Self> {
         env_logger::init();
+
+        info!("Starting scheduler on {bind_host}:{bind_port}");
 
         let addr = format!("{}:{}", bind_host, bind_port);
         let addr = addr.parse()?;
