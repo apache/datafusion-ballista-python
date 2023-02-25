@@ -118,6 +118,9 @@ impl ExecutionEngine for PythonExecutionEngine {
             let kwargs = vec![("plan_bytes", py_bytes)];
             fun.call(py, (), Some(kwargs.into_py_dict(py)))?;
 
+            // TODO how do we return a stream of batches here? or maybe we need to do the
+            // shuffle write in Python as well?
+
             Ok(())
         })
         .map_err(|e: PyErr| {

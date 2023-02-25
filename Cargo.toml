@@ -45,7 +45,7 @@ datafusion-expr = "18.0.0"
 datafusion-substrait = "18.0.0"
 env_logger = "0.10.0"
 futures = "0.3"
-log = "0.4"
+log = "0.4.17"
 mimalloc = { version = "*", optional = true, default-features = false }
 prost = "0.11"
 pyo3 = { version = "0.18", features = ["extension-module", "abi3", "abi3-py37"] }
