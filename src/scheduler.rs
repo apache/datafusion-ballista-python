@@ -60,7 +60,7 @@ impl PyScheduler {
             wait_for_future(py, cluster).map_err(|e| BallistaError::Common(format!("{}", e)))?;
 
         let fut = start_server(cluster, addr, config);
-        wait_for_future(py, fut).map_err(|e| BallistaError::Common(format!("{}", e)))?;
+        let _ = wait_for_future(py, fut).map_err(|e| BallistaError::Common(format!("{}", e)))?;
 
         Ok(Self {})
     }
