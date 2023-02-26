@@ -15,12 +15,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use crate::errors::BallistaError;
+use crate::errors::{BallistaError, DataFusionError};
 use crate::utils::wait_for_future;
+use async_trait::async_trait;
 use ballista_core::config::{LogRotationPolicy, TaskSchedulingPolicy};
-use ballista_core::execution_plans::ShuffleWriterExec;
+use ballista_core::execution_plans::{ShuffleWriter, ShuffleWriterExec};
+use ballista_core::serde::protobuf::ShuffleWritePartition;
 use ballista_executor::executor::ExecutionEngine;
 use ballista_executor::executor_process::{start_executor_process, ExecutorProcessConfig};
+use datafusion::execution::context::TaskContext;
+use datafusion::physical_plan::metrics::MetricsSet;
 use datafusion::physical_plan::ExecutionPlan;
 use datafusion_substrait::physical_plan::producer::to_substrait_rel;
 use datafusion_substrait::substrait::proto::{extensions, plan_rel, Plan, PlanRel, RelRoot};
@@ -87,22 +91,43 @@ struct PythonExecutionEngine {}
 impl ExecutionEngine for PythonExecutionEngine {
     fn new_shuffle_writer(
         &self,
-        job_id: String,
-        stage_id: usize,
+        _job_id: String,
+        _stage_id: usize,
         plan: Arc<dyn ExecutionPlan>,
-        work_dir: &str,
-    ) -> Result<Arc<ShuffleWriterExec>, ballista_core::error::BallistaError> {
+        _work_dir: &str,
+    ) -> Result<Arc<dyn ShuffleWriter>, ballista_core::error::BallistaError> {
         // serialize the plan to substrait format
         let substrait_plan = to_substrait_plan(plan.as_ref())
             .map_err(|e| ballista_core::error::BallistaError::General(format!("{}", e)))?;
-        let mut plan_bytes = Vec::<u8>::new();
-        substrait_plan.encode(&mut plan_bytes).map_err(|e| {
-            ballista_core::error::BallistaError::General(format!(
-                "Failed to encode substrait plan: {e}"
-            ))
-        })?;
+        let mut substrait_plan_bytes = Vec::<u8>::new();
+        substrait_plan
+            .encode(&mut substrait_plan_bytes)
+            .map_err(|e| {
+                ballista_core::error::BallistaError::General(format!(
+                    "Failed to encode substrait plan: {e}"
+                ))
+            })?;
 
+        Ok(Arc::new(PythonSubstraitExecutor {
+            substrait_plan_bytes,
+        }))
+    }
+}
+
+#[derive(Debug)]
+struct PythonSubstraitExecutor {
+    substrait_plan_bytes: Vec<u8>,
+}
+
+#[async_trait]
+impl ShuffleWriter for PythonSubstraitExecutor {
+    async fn execute_shuffle_write(
+        &self,
+        input_partition: usize,
+        context: Arc<TaskContext>,
+    ) -> datafusion_common::Result<Vec<ShuffleWritePartition>> {
         // call Python code to execute the substrait plan
+        let x = self.substrait_plan_bytes.clone();
         Python::with_gil(|py| {
             let fun: Py<PyAny> = PyModule::from_code(
                 py,
@@ -110,26 +135,26 @@ impl ExecutionEngine for PythonExecutionEngine {
                     print('[Python] execute_substrait with', len(kwargs['plan_bytes']), 'bytes'",
                 "",
                 "",
-            )?
-            .getattr("execute_substrait")?
+            )
+            .map_err(|e| datafusion_common::DataFusionError::Execution(format!("{}", e)))?
+            .getattr("execute_substrait")
+            .map_err(|e| datafusion_common::DataFusionError::Execution(format!("{}", e)))?
             .into();
 
-            let py_bytes = plan_bytes.into_py(py);
+            let py_bytes = x.into_py(py);
             let kwargs = vec![("plan_bytes", py_bytes)];
-            fun.call(py, (), Some(kwargs.into_py_dict(py)))?;
+            fun.call(py, (), Some(kwargs.into_py_dict(py)))
+                .map_err(|e| datafusion_common::DataFusionError::Execution(format!("{}", e)))?;
 
-            // TODO how do we return a stream of batches here? or maybe we need to do the
-            // shuffle write in Python as well?
+            // TODO python function needs to return this metadata
+            let partition_meta = vec![];
 
-            Ok(())
+            Ok(partition_meta)
         })
-        .map_err(|e: PyErr| {
-            ballista_core::error::BallistaError::General("python fail".to_string())
-        })?;
+    }
 
-        Err(ballista_core::error::BallistaError::NotImplemented(
-            "PythonExecutionEngine not implemented yet".to_string(),
-        ))
+    fn collect_plan_metrics(&self) -> Vec<MetricsSet> {
+        vec![]
     }
 }
 
