@@ -26,6 +26,7 @@ use ballista_executor::executor_process::{start_executor_process, ExecutorProces
 use datafusion::execution::context::TaskContext;
 use datafusion::physical_plan::metrics::MetricsSet;
 use datafusion::physical_plan::ExecutionPlan;
+use datafusion_common::DataFusionError;
 use datafusion_substrait::physical_plan::producer::to_substrait_rel;
 use datafusion_substrait::substrait::proto::{extensions, plan_rel, Plan, PlanRel, RelRoot};
 use prost::Message;
@@ -119,25 +120,34 @@ impl QueryStageExecutor for PythonSubstraitExecutor {
         input_partition: usize,
         context: Arc<TaskContext>,
     ) -> datafusion_common::Result<Vec<ShuffleWritePartition>> {
-        // call Python code to execute the substrait plan
-        let x = self.substrait_plan_bytes.clone();
-        Python::with_gil(|py| {
-            let fun: Py<PyAny> = PyModule::from_code(
-                py,
-                "def execute_substrait(*args, **kwargs):
-                    print('[Python] execute_substrait with', len(kwargs['plan_bytes']), 'bytes'",
-                "",
-                "",
-            )
-            .map_err(|e| datafusion_common::DataFusionError::Execution(format!("{}", e)))?
-            .getattr("execute_substrait")
-            .map_err(|e| datafusion_common::DataFusionError::Execution(format!("{}", e)))?
-            .into();
+        // Python code for executing a substrait plan
+        let code = r#"
+from datafusion.cudf import SessionContext
+from datafusion import substrait as ss
 
-            let py_bytes = x.into_py(py);
+
+def execute_substrait(*args, **kwargs):
+    substrait_bytes = kwargs['plan_bytes']
+    print('[Python] execute_substrait with', len(substrait_bytes), 'bytes'
+    ctx = SessionContext()
+    substrait_plan = ss.substrait.serde.deserialize_bytes(substrait_bytes)
+    df_logical_plan = ss.substrait.consumer.from_substrait_plan(ctx, substrait_plan)
+    # TODO: execute plan and write results to shuffle files in IPC format
+"#;
+
+        // call Python code to execute the substrait plan
+        let substrait_plan_bytes = self.substrait_plan_bytes.clone();
+        Python::with_gil(|py| {
+            let fun: Py<PyAny> = PyModule::from_code(py, code, "", "")
+                .map_err(py_to_df_err)?
+                .getattr("execute_substrait")
+                .map_err(py_to_df_err)?
+                .into();
+
+            let py_bytes = substrait_plan_bytes.into_py(py);
             let kwargs = vec![("plan_bytes", py_bytes)];
             fun.call(py, (), Some(kwargs.into_py_dict(py)))
-                .map_err(|e| datafusion_common::DataFusionError::Execution(format!("{}", e)))?;
+                .map_err(py_to_df_err)?;
 
             // TODO python function needs to return this metadata
             let partition_meta = vec![];
@@ -149,6 +159,10 @@ impl QueryStageExecutor for PythonSubstraitExecutor {
     fn collect_plan_metrics(&self) -> Vec<MetricsSet> {
         vec![]
     }
+}
+
+fn py_to_df_err(e: PyErr) -> DataFusionError {
+    DataFusionError::Execution(format!("{}", e))
 }
 
 // TODO upstream this into datafusion-substrait
