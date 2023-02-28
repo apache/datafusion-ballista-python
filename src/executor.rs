@@ -15,11 +15,25 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use crate::errors::BallistaError;
 use crate::utils::wait_for_future;
+use async_trait::async_trait;
+use ballista::prelude::BallistaError;
 use ballista_core::config::{LogRotationPolicy, TaskSchedulingPolicy};
+use ballista_core::serde::protobuf::ShuffleWritePartition;
+use ballista_executor::execution_engine::ExecutionEngine;
+use ballista_executor::execution_engine::QueryStageExecutor;
 use ballista_executor::executor_process::{start_executor_process, ExecutorProcessConfig};
+use datafusion::execution::context::TaskContext;
+use datafusion::physical_plan::metrics::MetricsSet;
+use datafusion::physical_plan::ExecutionPlan;
+use datafusion_common::DataFusionError;
+use datafusion_substrait::physical_plan::producer::to_substrait_rel;
+use datafusion_substrait::substrait::proto::{extensions, plan_rel, Plan, PlanRel, RelRoot};
+use prost::Message;
 use pyo3::prelude::*;
+use pyo3::types::{IntoPyDict, PyTuple};
+use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Python wrapper around an executor, allowing users to run an executor within a Python process.
 #[pyclass(name = "Executor", module = "ballista", subclass)]
@@ -45,9 +59,6 @@ impl PyExecutor {
         concurrent_tasks: usize,
         py: Python,
     ) -> PyResult<Self> {
-        // TODO add option to register a custom query stage executor ExecutionPlan so
-        // that we can execute Python plans (delegating to DataFrame libraries)
-
         let config = ExecutorProcessConfig {
             special_mod_log_level: "info".to_string(),
             external_host: None,
@@ -66,11 +77,125 @@ impl PyExecutor {
             print_thread_info: true,
             job_data_ttl_seconds: 60 * 60,
             job_data_clean_up_interval_seconds: 60 * 30,
+            execution_engine: Some(Arc::new(PythonExecutionEngine {})),
         };
 
         let fut = start_executor_process(config);
-        let _ = wait_for_future(py, fut).map_err(|e| BallistaError::Common(format!("{}", e)))?;
+        let _ = wait_for_future(py, fut).unwrap();
 
         Ok(Self {})
     }
+}
+
+struct PythonExecutionEngine {}
+
+impl ExecutionEngine for PythonExecutionEngine {
+    fn create_query_stage_exec(
+        &self,
+        job_id: String,
+        stage_id: usize,
+        plan: Arc<dyn ExecutionPlan>,
+        work_dir: &str,
+    ) -> datafusion_common::Result<Arc<dyn QueryStageExecutor>> {
+        // serialize the plan to substrait format
+        let substrait_plan = to_substrait_plan(plan.as_ref()).unwrap();
+        let mut substrait_plan_bytes = Vec::<u8>::new();
+        substrait_plan.encode(&mut substrait_plan_bytes).unwrap();
+
+        Ok(Arc::new(PythonSubstraitExecutor {
+            substrait_plan_bytes,
+        }))
+    }
+}
+
+#[derive(Debug)]
+struct PythonSubstraitExecutor {
+    substrait_plan_bytes: Vec<u8>,
+}
+
+#[async_trait]
+impl QueryStageExecutor for PythonSubstraitExecutor {
+    async fn execute_query_stage(
+        &self,
+        input_partition: usize,
+        context: Arc<TaskContext>,
+    ) -> datafusion_common::Result<Vec<ShuffleWritePartition>> {
+        // Python code for executing a substrait plan
+        let code = r#"
+from datafusion.cudf import SessionContext
+from datafusion import substrait as ss
+
+
+def execute_substrait(*args, **kwargs):
+    substrait_bytes = kwargs['plan_bytes']
+    print('[Python] execute_substrait with', len(substrait_bytes), 'bytes'
+    ctx = SessionContext()
+    substrait_plan = ss.substrait.serde.deserialize_bytes(substrait_bytes)
+    df_logical_plan = ss.substrait.consumer.from_substrait_plan(ctx, substrait_plan)
+    # TODO: execute plan and write results to shuffle files in IPC format
+"#;
+
+        // call Python code to execute the substrait plan
+        let substrait_plan_bytes = self.substrait_plan_bytes.clone();
+        Python::with_gil(|py| {
+            let fun: Py<PyAny> = PyModule::from_code(py, code, "", "")
+                .map_err(py_to_df_err)?
+                .getattr("execute_substrait")
+                .map_err(py_to_df_err)?
+                .into();
+
+            let py_bytes = substrait_plan_bytes.into_py(py);
+            let kwargs = vec![("plan_bytes", py_bytes)];
+            fun.call(py, (), Some(kwargs.into_py_dict(py)))
+                .map_err(py_to_df_err)?;
+
+            // TODO python function needs to return this metadata
+            let partition_meta = vec![];
+
+            Ok(partition_meta)
+        })
+    }
+
+    fn collect_plan_metrics(&self) -> Vec<MetricsSet> {
+        vec![]
+    }
+}
+
+fn py_to_df_err(e: PyErr) -> DataFusionError {
+    DataFusionError::Execution(format!("{}", e))
+}
+
+// TODO upstream this into datafusion-substrait
+/// Convert DataFusion ExecutionPlan to Substrait Plan
+pub fn to_substrait_plan(plan: &dyn ExecutionPlan) -> Result<Box<Plan>, BallistaError> {
+    // Parse relation nodes
+    let mut extension_info: (
+        Vec<extensions::SimpleExtensionDeclaration>,
+        HashMap<String, u32>,
+    ) = (vec![], HashMap::new());
+    // Generate PlanRel(s)
+    // Note: Only 1 relation tree is currently supported
+    let plan_rels = vec![PlanRel {
+        rel_type: Some(plan_rel::RelType::Root(RelRoot {
+            input: Some(*to_substrait_rel(plan, &mut extension_info)?),
+            names: plan
+                .schema()
+                .fields()
+                .iter()
+                .map(|f| f.name().clone())
+                .collect(),
+        })),
+    }];
+
+    let (function_extensions, _) = extension_info;
+
+    // Return parsed plan
+    Ok(Box::new(Plan {
+        version: None, // TODO: https://github.com/apache/arrow-datafusion/issues/4949
+        extension_uris: vec![],
+        extensions: function_extensions,
+        relations: plan_rels,
+        advanced_extensions: None,
+        expected_type_urls: vec![],
+    }))
 }

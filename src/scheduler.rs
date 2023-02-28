@@ -55,7 +55,9 @@ impl PyScheduler {
             finished_job_state_clean_up_interval_seconds: 60,
             advertise_flight_sql_endpoint: None,
             cluster_storage: ClusterStorageConfig::Memory,
+
             job_resubmit_interval_ms: None,
+            executor_termination_grace_period: 0,
         };
 
         let cluster = BallistaCluster::new_from_config(&config);
