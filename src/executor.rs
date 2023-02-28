@@ -15,13 +15,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use crate::errors::{BallistaError, DataFusionError};
 use crate::utils::wait_for_future;
 use async_trait::async_trait;
+use ballista::prelude::BallistaError;
 use ballista_core::config::{LogRotationPolicy, TaskSchedulingPolicy};
-use ballista_core::execution_plans::{ShuffleWriter, ShuffleWriterExec};
 use ballista_core::serde::protobuf::ShuffleWritePartition;
-use ballista_executor::executor::ExecutionEngine;
+use ballista_executor::execution_engine::ExecutionEngine;
+use ballista_executor::execution_engine::QueryStageExecutor;
 use ballista_executor::executor_process::{start_executor_process, ExecutorProcessConfig};
 use datafusion::execution::context::TaskContext;
 use datafusion::physical_plan::metrics::MetricsSet;
@@ -80,7 +80,7 @@ impl PyExecutor {
         };
 
         let fut = start_executor_process(config);
-        let _ = wait_for_future(py, fut).map_err(|e| BallistaError::Common(format!("{}", e)))?;
+        let _ = wait_for_future(py, fut).unwrap();
 
         Ok(Self {})
     }
@@ -89,24 +89,17 @@ impl PyExecutor {
 struct PythonExecutionEngine {}
 
 impl ExecutionEngine for PythonExecutionEngine {
-    fn new_shuffle_writer(
+    fn create_query_stage_exec(
         &self,
-        _job_id: String,
-        _stage_id: usize,
+        job_id: String,
+        stage_id: usize,
         plan: Arc<dyn ExecutionPlan>,
-        _work_dir: &str,
-    ) -> Result<Arc<dyn ShuffleWriter>, ballista_core::error::BallistaError> {
+        work_dir: &str,
+    ) -> datafusion_common::Result<Arc<dyn QueryStageExecutor>> {
         // serialize the plan to substrait format
-        let substrait_plan = to_substrait_plan(plan.as_ref())
-            .map_err(|e| ballista_core::error::BallistaError::General(format!("{}", e)))?;
+        let substrait_plan = to_substrait_plan(plan.as_ref()).unwrap();
         let mut substrait_plan_bytes = Vec::<u8>::new();
-        substrait_plan
-            .encode(&mut substrait_plan_bytes)
-            .map_err(|e| {
-                ballista_core::error::BallistaError::General(format!(
-                    "Failed to encode substrait plan: {e}"
-                ))
-            })?;
+        substrait_plan.encode(&mut substrait_plan_bytes).unwrap();
 
         Ok(Arc::new(PythonSubstraitExecutor {
             substrait_plan_bytes,
@@ -120,8 +113,8 @@ struct PythonSubstraitExecutor {
 }
 
 #[async_trait]
-impl ShuffleWriter for PythonSubstraitExecutor {
-    async fn execute_shuffle_write(
+impl QueryStageExecutor for PythonSubstraitExecutor {
+    async fn execute_query_stage(
         &self,
         input_partition: usize,
         context: Arc<TaskContext>,
