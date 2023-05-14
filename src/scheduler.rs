@@ -18,7 +18,7 @@
 use crate::errors::BallistaError;
 use crate::utils::wait_for_future;
 use ballista_core::config::TaskSchedulingPolicy;
-use ballista_scheduler::cluster::{BallistaCluster};
+use ballista_scheduler::cluster::BallistaCluster;
 use ballista_scheduler::config::{ClusterStorageConfig, SchedulerConfig, TaskDistribution};
 use ballista_scheduler::scheduler_process::start_server;
 use log::info;
@@ -57,7 +57,7 @@ impl PyScheduler {
             job_resubmit_interval_ms: None,
             executor_termination_grace_period: 30000,
             scheduler_event_expected_processing_duration: 1000,
-            task_distribution: TaskDistribution::RoundRobin
+            task_distribution: TaskDistribution::RoundRobin,
         };
 
         let cluster = BallistaCluster::new_from_config(&config);
