@@ -66,8 +66,8 @@ impl PyExecutor {
             print_thread_info: true,
             job_data_ttl_seconds: 60 * 60,
             job_data_clean_up_interval_seconds: 60 * 30,
+            execution_engine: None,
         };
-
         let fut = start_executor_process(config);
         let _ = wait_for_future(py, fut).map_err(|e| BallistaError::Common(format!("{}", e)))?;
 

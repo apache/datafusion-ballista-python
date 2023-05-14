@@ -17,9 +17,9 @@
 
 [package]
 name = "ballista-python"
-version = "0.10.0"
-homepage = "https://github.com/apache/arrow-ballista"
-repository = "https://github.com/apache/arrow-ballista"
+version = "0.11.0"
+homepage = "https://github.com/apache/arrow-ballista-python"
+repository = "https://github.com/apache/arrow-ballista-python"
 authors = ["Apache Arrow <dev@arrow.apache.org>"]
 description = "Python bindings for Apache Arrow Ballista"
 readme = "README.md"
@@ -35,13 +35,13 @@ default = ["mimalloc"]
 
 [dependencies]
 async-trait = "0.1"
-ballista = { git = "https://github.com/apache/arrow-ballista", rev = "0.11.0-rc1" }
-ballista-core = { git = "https://github.com/apache/arrow-ballista", rev = "0.11.0-rc1" }
-ballista-executor = { git = "https://github.com/apache/arrow-ballista", rev = "0.11.0-rc1" }
-ballista-scheduler = { git = "https://github.com/apache/arrow-ballista", rev = "0.11.0-rc1" }
-datafusion = { version = "18.0.0", features = ["pyarrow"] }
-datafusion-common = "18.0.0"
-datafusion-expr = "18.0.0"
+ballista = { git = "https://github.com/apache/arrow-ballista", rev = "d2f33820c108f63cd3a31e425bc15c7e9fec255b" }
+ballista-core = { git = "https://github.com/apache/arrow-ballista", rev = "d2f33820c108f63cd3a31e425bc15c7e9fec255b" }
+ballista-executor = { git = "https://github.com/apache/arrow-ballista", rev = "d2f33820c108f63cd3a31e425bc15c7e9fec255b" }
+ballista-scheduler = { git = "https://github.com/apache/arrow-ballista", rev = "d2f33820c108f63cd3a31e425bc15c7e9fec255b" }
+datafusion = { version = "24.0.0", features = ["pyarrow"] }
+datafusion-common = "24.0.0"
+datafusion-expr = "24.0.0"
 env_logger = "0.10.0"
 futures = "0.3"
 log = "0.4.17"

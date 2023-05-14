@@ -58,7 +58,7 @@ impl Accumulator for RustAccumulator {
             // 1. cast args to Pyarrow array
             let py_args = values
                 .iter()
-                .map(|arg| arg.data().to_owned().to_pyarrow(py).unwrap())
+                .map(|arg| arg.to_data().to_owned().to_pyarrow(py).unwrap())
                 .collect::<Vec<_>>();
             let py_args = PyTuple::new(py, py_args);
 
@@ -78,7 +78,7 @@ impl Accumulator for RustAccumulator {
 
             // 1. cast states to Pyarrow array
             let state = state
-                .data()
+                .to_data()
                 .to_pyarrow(py)
                 .map_err(|e| DataFusionError::Execution(format!("{}", e)))?;
 
