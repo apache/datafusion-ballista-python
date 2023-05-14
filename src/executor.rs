@@ -48,6 +48,7 @@ impl PyExecutor {
         // TODO add option to register a custom query stage executor ExecutionPlan so
         // that we can execute Python plans (delegating to DataFrame libraries)
 
+
         let config = ExecutorProcessConfig {
             special_mod_log_level: "info".to_string(),
             external_host: None,
@@ -66,8 +67,9 @@ impl PyExecutor {
             print_thread_info: true,
             job_data_ttl_seconds: 60 * 60,
             job_data_clean_up_interval_seconds: 60 * 30,
-        };
+            execution_engine: None,
 
+        };
         let fut = start_executor_process(config);
         let _ = wait_for_future(py, fut).map_err(|e| BallistaError::Common(format!("{}", e)))?;
 

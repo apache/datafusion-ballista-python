@@ -18,8 +18,8 @@
 use crate::errors::BallistaError;
 use crate::utils::wait_for_future;
 use ballista_core::config::TaskSchedulingPolicy;
-use ballista_scheduler::cluster::BallistaCluster;
-use ballista_scheduler::config::{ClusterStorageConfig, SchedulerConfig, SlotsPolicy};
+use ballista_scheduler::cluster::{BallistaCluster};
+use ballista_scheduler::config::{ClusterStorageConfig, SchedulerConfig, TaskDistribution};
 use ballista_scheduler::scheduler_process::start_server;
 use log::info;
 use pyo3::prelude::*;
@@ -50,12 +50,14 @@ impl PyScheduler {
             bind_port: bind_port,
             scheduling_policy: TaskSchedulingPolicy::PullStaged,
             event_loop_buffer_size: 1000,
-            executor_slots_policy: SlotsPolicy::RoundRobin,
             finished_job_data_clean_up_interval_seconds: 60,
             finished_job_state_clean_up_interval_seconds: 60,
             advertise_flight_sql_endpoint: None,
             cluster_storage: ClusterStorageConfig::Memory,
             job_resubmit_interval_ms: None,
+            executor_termination_grace_period: 30000,
+            scheduler_event_expected_processing_duration: 1000,
+            task_distribution: TaskDistribution::RoundRobin
         };
 
         let cluster = BallistaCluster::new_from_config(&config);
