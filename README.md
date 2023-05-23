@@ -79,6 +79,8 @@ python -m pip install -U pip
 python -m pip install -r requirements-37.txt
 # if python -V gives python 3.8/3.9/3.10
 python -m pip install -r requirements-310.txt
+# if python -V gives python 3.11
+python -m pip install -r requirements-311.txt
 ```
 
 Whenever rust code changes (your changes or via `git pull`):
