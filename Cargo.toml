@@ -41,7 +41,7 @@ ballista-executor = { git = "https://github.com/apache/arrow-ballista", rev = "d
 ballista-scheduler = { git = "https://github.com/apache/arrow-ballista", rev = "d2f33820c108f63cd3a31e425bc15c7e9fec255b" }
 datafusion = { version = "24.0.0", features = ["pyarrow"] }
 datafusion-common = "24.0.0"
-datafusion-expr = "24.0.0"
+datafusion-expr = "25.0.0"
 env_logger = "0.10.0"
 futures = "0.3"
 log = "0.4.17"
